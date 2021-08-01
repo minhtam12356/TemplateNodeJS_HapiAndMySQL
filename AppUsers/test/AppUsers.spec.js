@@ -50,7 +50,7 @@ describe(`Tests ${Model.modelName}`, function() {
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/AppUsers/registerUser`)
+      .post(`/AppUsers/loginUser`)
       .send(body)
       .end((err, res) => {
         if ( err ) {
