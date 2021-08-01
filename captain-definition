@@ -1,15 +1,4 @@
 {
   "schemaVersion": 2,
-  "dockerfileLines": [
-    "FROM node:10.16.3-buster",
-    "RUN mkdir -p /usr/src/app",
-    "WORKDIR /usr/src/app",
-    "COPY ./package.json /usr/src/app/",
-    "RUN npm install && npm cache clean --force",
-    "COPY ./ /usr/src/app",
-    "ENV NODE_ENV production",
-    "ENV PORT 5001",
-    "EXPOSE 5001",
-    "CMD [ \"npm\", \"start\" ]"
-  ]
+  "dockerfilePath": "./Dockerfile"
 }

@@ -1,10 +1,10 @@
 const chai = require('chai');
 const expect = chai.expect;
-const jsonComparer = require('deep-diff')
+const jsonComparer = require('deep-diff');
 const { readFile } = require('fs');
 
 function checkResponseStatus(res, expected) {
-  if (res.body.statusCode !== expected) {
+  if (res.body && res.body.statusCode !== expected) {
     console.log('========Request=======');
     console.log(res.request.url);
     console.log(res.request.method);
@@ -13,8 +13,19 @@ function checkResponseStatus(res, expected) {
     console.log('========Response======');
     console.log(res.body);
   }
-  expect(res).to.have.status(expected);
+  expect(res).to.have.status(200);
+  expect(res.body.statusCode === expected);
 }
+
+var lhs = {
+  name: 'my object',
+  description: "it's an object!",
+  details: {
+    it: 'has',
+    an: 'array',
+    with: ['a', 'few', 'elements'],
+  },
+};
 
 /* sample */
 // var rhs = {
@@ -49,7 +60,7 @@ async function checkResponseBody(res, templatePath) {
       }
       let templateData = JSON.parse(data);
 
-      let matchResult = jsonComparer(res.body, templateData);
+      let matchResult = jsonComparer(templateData, res.body);
       const TOTALLY_MATCHED = undefined;
 
       if (matchResult !== TOTALLY_MATCHED) {
@@ -59,11 +70,10 @@ async function checkResponseBody(res, templatePath) {
             console.log(result);
           }
           if (result.kind === 'E') {
-            if(result.lhs && result.lhs !== null && result.lhs.it && result.lhs.an){
+            if (result.lhs && result.lhs !== null && result.lhs.it && result.lhs.an) {
               console.log(result);
               expect(result.lhs.an).to.not.equal('array');
-            }
-            else if(result.rhs && result.rhs !== null && result.rhs.it && result.rhs.an){
+            } else if (result.rhs && result.rhs !== null && result.rhs.it && result.rhs.an) {
               console.log(result);
               expect(result.rhs.an).to.not.equal('array');
             }

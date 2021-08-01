@@ -1,11 +1,1 @@
-require('./webclient/user/user.spec');
-// require('./api/order/order_getorders.js');
-// require('./api/order/order_user_place.spec.js');
-// require('./api/order/order_place_order.spec.js');
-// require('./api/discount/discount.spec.js');
-// require('./api/schedule-serve/scheduleServe.js');
-// require('./api/menu/tablet-menu.spec.js');
-// require('./api/user/user.spec.js');
-// require('./api/merchant/merchant.spec.js');
-// require('./api/product/productUnits.spec.js');
-// require('./api/report/report.spec.js');
+require('../AppUsers/test/AppUsers.spec');

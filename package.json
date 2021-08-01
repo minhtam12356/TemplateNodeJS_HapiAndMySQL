@@ -40,7 +40,7 @@
     "nodemon": "^1.11.0"
   },
   "scripts": {
-    "test": "mocha Test/index.js --timeout 15000",
+    "test": "mocha Test/index.js --timeout 15000 --exit",
     "start": "node server",
     "eslint": "./node_modules/.bin/eslint ./*/*.js",
     "dev": "nodemon --exec 'npm run eslint & npm start'"

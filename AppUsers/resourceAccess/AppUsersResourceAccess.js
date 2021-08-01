@@ -73,4 +73,5 @@ module.exports = {
   updateById,
   initDB,
   updateAll,
+  modelName: tableName
 };
