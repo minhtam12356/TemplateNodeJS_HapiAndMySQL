@@ -14,7 +14,7 @@ const app = require('../../server');
 
 describe(`Tests ${Model.modelName}`, function() {
   let token = "";
-  let fakeUserName = faker.name.firstName();
+  let fakeUserName = faker.name.firstName() + faker.name.lastName();
   before(done => {
     new Promise(async function(resolve, reject) {
       resolve();
@@ -50,7 +50,7 @@ describe(`Tests ${Model.modelName}`, function() {
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/AppUsers/loginUser`)
+      .post(`/AppUsers/registerUser`)
       .send(body)
       .end((err, res) => {
         if ( err ) {
