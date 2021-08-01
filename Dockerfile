@@ -1,6 +1,4 @@
 FROM node:10.16.3-buster
-ENV TZ Asia/Ho_Chi_Minh
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app

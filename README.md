@@ -1,16 +1,12 @@
-# Teamplate nodejs: hapijs-api-template
-## Description
+# TemplateNodeJS
+TemplateNodeJS project
+## Discription
 ##. hapijs
 ##. mysql
 ##. swagger
 ##. eslint
 ## Installation
 ####1. Clone this project or Download that ZIP file
-
-```sh
-$ git clone https://github.com/nexlesoft/Hapi-api-template.git
-```
-
 ####2.  Make sure you have [npm](https://www.npmjs.org/) installed globally
 
 More details here
@@ -32,6 +28,3 @@ $ npm start
 ```
 
 ## Try http://localhost:5001/documentation
-## Reference
-* https://medium.com/the-resonant-web/production-ready-hapi-js-starter-kit-part-2-cba358373017
-* https://medium.com/the-resonant-web/production-ready-hapi-js-starter-kit-part-2-cba358373017

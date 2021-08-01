@@ -1,23 +1,30 @@
+/**
+ * Created by A on 7/18/17.
+ */
+const dotenv    = require('dotenv').config();
+
 const knex = require('knex')({
-  client: 'mysql',
-  connection: {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
-  },
-  pool: { min: 0, max: 10 }
+    client: 'mysql',
+    connection: {
+        host     : process.env.DB_HOST,
+        user     : process.env.DB_USER,
+        password : process.env.DB_PASSWORD,
+        database : process.env.DB_NAME,
+        port: process.env.DB_PORT
+    },
+    pool: { min: 0, max: 20 }
 });
 
-// Create a table
-knex.schema.createTable('users', table => {
-  table.increments('id');
-  table.string('username').unsigned();
-  table.string('password');
-  table.string('email');
-  table.boolean('admin');
-});
+function timestamps(table) {
+    table
+        .timestamp('updatedAt')
+        .defaultTo(knex.raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
+    table.timestamp('createdAt').defaultTo(knex.fn.now());
+    table.index('createdAt');
+    table.index('updatedAt');
+}
 
 module.exports = {
-  DB: knex
-};
+    DB : knex,
+    timestamps
+}
