@@ -4,10 +4,8 @@
 'use strict';
 
 const BooksResourceAccess = require("./resourceAccess/BooksResourceAccess");
-const BooksChapterResourceAccess = require("../BooksChapter/resourceAccess/BooksChapterResourceAccess");
 const BooksOverviewModel = require('./model/BooksOverviewModel');
 const UtilFunctions = require('../ApiUtils/utilFunctions');
-const SEOUtils = require('../ApiUtils/seoUtils');
 const Logger = require('../../utils/logging');
 
 async function mappingToBookOverviewModel(books) {
@@ -15,16 +13,6 @@ async function mappingToBookOverviewModel(books) {
 
   for (let bookCounter = 0; bookCounter < books.length; bookCounter++) {
     const bookData = books[bookCounter];
-
-    //find latest chapter of this book
-    let chapterOrder = {
-      key: "booksChapterNumber",
-      value: "desc"
-    }
-    let booksChapter = await BooksChapterResourceAccess.find({ booksId: bookData.booksId }, 0, 1, chapterOrder);
-    if (booksChapter && booksChapter.length > 0) {
-      bookData.booksChapter = booksChapter;
-    }
 
     let bookModel = BooksOverviewModel.fromData(bookData);
 
@@ -47,7 +35,7 @@ async function getBookList(filter, skip, limit, order) {
   }
   let booksCount = await BooksResourceAccess.count(filter, order);
   let bookList = await mappingToBookOverviewModel(books);
-  let metadata = SEOUtils.getMetatagsForPages();
+  let metadata = [];
   if (bookList && booksCount) {
     return ({ data: bookList, total: booksCount[0].count , metadata: metadata});
   } else {
@@ -168,7 +156,7 @@ async function registerNewBook(bookData) {
 
 async function createBooksTagCloud(bookData) {
   let booksCategoryList = bookData.booksCategories.split(';');
-  let projectName = process.env.PROJECT_NAME || 'goctruyentranh.net';
+  let projectName = process.env.PROJECT_NAME || 'makefamousapp.com';
   let booksName = bookData.booksName || "";
   let tagCloud = [];
   for (let i = 0; i < booksCategoryList.length; i++) {

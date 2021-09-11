@@ -95,7 +95,7 @@ async function changeUserPassword(userData, newPassword) {
 
 async function generate2FACode(appUserId) {
     // đây là tên ứng dụng của các bạn, nó sẽ được hiển thị trên app Google Authenticator hoặc Authy sau khi bạn quét mã QR
-    const serviceName = process.env.HOST_NAME || 'cdn.goctruyentranh.net';
+    const serviceName = process.env.HOST_NAME || 'trainingdemo.makefamousapp.com';
 
     let user = await AppUsersResourceAccess.find({ appUserId: appUserId });
 

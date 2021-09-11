@@ -6,9 +6,6 @@
 const fs = require('fs');
 
 const Logger = require('../../utils/logging');
-const BooksChapterResource = require('../BooksChapter/resourceAccess/BooksChapterView');
-const BooksResource = require('../Books/resourceAccess/BooksResourceAccess');
-const BooksImageResource = require('../BooksImage/resourceAccess/BooksImageResourceAccess');
 
 //Upload base64 image
 //fileFormat: PNG, JPEG, MP4
@@ -34,39 +31,6 @@ async function uploadMediaFile(fileData, fileFormat = 'png') {
   });
 }
 
-async function uploadNewChapterImage(booksChapterUrl, imageData, imageFormat) {
-  let targetChapter = await BooksChapterResource.find({booksChapterUrl: booksChapterUrl}, 0, 1);
-  if (!targetChapter || targetChapter.length < 1) {
-    reject('can not find chapter');
-    return undefined;
-  }
-  targetChapter = targetChapter[0];
-
-  let newImageUrl = await uploadMediaFile(imageData, imageFormat);
-  if (!newImageUrl) {
-    reject('upload failed')
-    return undefined;
-  }
-
-  let imageCounter = BooksImageResource.find({booksChapterId: booksChapterId});
-  let newBookImage = await BooksImageResource.insert({
-    booksImageUrl: newImageUrl,
-    booksChapterId: targetChapter.booksChapterId,
-    booksImageIndex: (imageCounter && imageCounter.length) ? imageCounter.length : 0 
-  });
-
-  if (!newBookImage) {
-    reject('store image to db failed');
-    fs.rm(newImagePath);
-    return undefined;
-  }
-
-  return {
-    booksImageUrl: newImageUrl
-  }
-}
-
 module.exports = {
   uploadMediaFile,
-  uploadNewChapterImage
 };
