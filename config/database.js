@@ -20,8 +20,12 @@ function timestamps(table) {
         .timestamp('updatedAt')
         .defaultTo(knex.raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
     table.timestamp('createdAt').defaultTo(knex.fn.now());
+    table.integer('isHidden').defaultTo(0);
+    table.integer('isDeleted').defaultTo(0);
     table.index('createdAt');
     table.index('updatedAt');
+    table.index('isHidden');
+    table.index('isDeleted');
 }
 
 module.exports = {

@@ -11,7 +11,6 @@ function makeQRHash(text) {
 }
 
 async function createQRCode(code, qrColor = "") {
-  console.log("createQRCode: " + code);
   return new Promise((resolve, reject) => {
     try {
       var opts = {

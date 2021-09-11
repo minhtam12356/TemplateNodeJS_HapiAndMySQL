@@ -1,0 +1,53 @@
+/**
+ * Created by A on 7/18/17.
+ */
+"use strict";
+const moduleName = 'Upload';
+const Manager = require(`../manager/${moduleName}Manager`);
+const Joi = require("joi");
+const Response = require("../../Common/route/response").setup(Manager);
+const CommonFunctions = require('../../Common/CommonFunctions');
+
+module.exports = {
+  uploadChapterImage: {
+    tags: ["api", `${moduleName}`],
+    description: `${moduleName} upload media`,
+    pre: [{ method: CommonFunctions.verifyToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        booksChapterUrl: Joi.string(),
+        booksImage: Joi.binary().encoding('base64'),
+        imageFormat: Joi.string().default('png')
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "uploadChapterImage");
+    },
+  },
+  uploadUserAvatar: {
+    tags: ["api", `${moduleName}`],
+    description: `${moduleName} upload media`,
+    pre: [{ method: CommonFunctions.verifyToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        image: Joi.binary().encoding('base64'),
+        imageFormat: Joi.string().default('png')
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "uploadUserAvatar");
+    },
+  },
+};

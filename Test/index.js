@@ -1,1 +1,1 @@
-require('../AppUsers/test/AppUsers.spec');
+require('../API/AppUsers/test/AppUsers.spec');
