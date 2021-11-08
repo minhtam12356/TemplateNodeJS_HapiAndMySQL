@@ -22,9 +22,10 @@ module.exports = {
         }
         reply(responseData).code(200);
       }).catch(data => {
-        console.error(data);
         Logger.error(data);
-        reply(errorCodes[500]).code(500);
+        let error = errorCodes[500];
+        error.error = data;
+        reply(error).code(500);
       });
     }
   },

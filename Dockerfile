@@ -6,7 +6,11 @@ COPY ./package.json /usr/src/app/
 RUN npm install && npm cache clean --force
 COPY ./ /usr/src/app
 
-ENV NODE_ENV production
+# ENV TZ='Asia/Ho_Chi_Minh'
+# RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+# RUN echo haha
+# RUN echo "Asia/Ho_Chi_Minh" > /etc/timezone
+
 ENV PORT 80
 EXPOSE 80
 CMD [ "npm", "start" ]

@@ -18,7 +18,11 @@ const manifest = {
             port: process.env.PORT || 5001,
             routes: {
                 cors: true
-            }
+            },
+            state: {
+                // If your cookie format is not RFC 6265, set this param to false.
+                strictHeader: false    
+              }
         }
     ],
     registrations: [{

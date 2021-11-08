@@ -108,17 +108,18 @@ async function find(tableName, filter, skip, limit, order) {
 }
 
 async function findById(tableName, key, id) {
-  let filter = {};
-  filter[key] = id;
-  let queryBuilder = _makeQueryBuilderByFilter(tableName, filter, 0, 1)
   return new Promise((resolve, reject) => {
     try {
-      queryBuilder.select()
+      DB(tableName).select().where(key, id)
         .then(records => {
-          resolve(records);
+          if(records && records.length > 0) {
+            resolve(records[0]);
+          }else {
+            resolve(undefined);
+          }
         });
     } catch (e) {
-      Logger.error("ResourceAccess", `DB FIND ERROR: ${tableName} : ${JSON.stringify(filter)} - ${skip} - ${limit} ${JSON.stringify(order)}`);
+      Logger.error("ResourceAccess", `DB FIND ERROR: findById ${tableName} : ${key} - ${id}`);
       Logger.error("ResourceAccess", e);
       reject(undefined);
     }
@@ -142,6 +143,19 @@ async function count(tableName, field, filter, order) {
   });
 }
 
+async function deleteById(tableName, id) {
+  let result = undefined;
+  try {
+    result = await DB(tableName)
+      .where(id)
+      .update({isDeleted:1});
+  } catch (e) {
+    Logger.error("ResourceAccess", `DB UPDATEBYID ERROR: ${tableName} : ${id}`);
+    Logger.error("ResourceAccess", e);
+  }
+  return result;
+}
+
 module.exports = {
   insert,
   find,
@@ -150,5 +164,6 @@ module.exports = {
   count,
   createOrReplaceView,
   updateAll,
-  sum
+  sum,
+  deleteById
 };

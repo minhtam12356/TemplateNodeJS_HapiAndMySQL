@@ -78,4 +78,5 @@ module.exports = {
   count,
   updateById,
   initDB,
+  modelName: tableName
 };

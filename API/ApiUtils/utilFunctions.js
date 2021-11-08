@@ -4,6 +4,9 @@
 'use strict';
 
 function nonAccentVietnamese(str) {
+    if (!str) {
+        return str;
+    }
     str = str.toLowerCase();
     //     We can also use this instead of from line 11 to line 17
     //     str = str.replace(/\u00E0|\u00E1|\u1EA1|\u1EA3|\u00E3|\u00E2|\u1EA7|\u1EA5|\u1EAD|\u1EA9|\u1EAB|\u0103|\u1EB1|\u1EAF|\u1EB7|\u1EB3|\u1EB5/g, "a");
@@ -27,20 +30,35 @@ function nonAccentVietnamese(str) {
 }
 
 function replaceAll(str, find, replace) {
-    return str.replace(new RegExp(find, 'g'), replace);
+  return str.replace(new RegExp(find, 'g'), replace);
+}
+
+function removeSpecialChars(str) {
+  let outString = str.replace(/[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, '');
+  return outString;
 }
 
 function convertToURLFormat(str) {
-    return "/" + str.replace(/[^A-Za-z0-9]/g, '-');
+  let outString = removeSpecialChars(str);
+  return "/" + encodeURI(replaceAll(outString,' ', '-'));
 }
 
 function randomInt(min, max) { // min and max included 
-    return Math.floor(Math.random() * (max - min + 1) + min)
+  return Math.floor(Math.random() * (max - min + 1) + min)
+}
+
+async function chunkArray(arrData, chunkSize) {
+  var arrayResult = [];
+  for (var i = 0; i < arrData.length; i += chunkSize) {
+    arrayResult.push(arrData.slice(i, i + chunkSize));
+  }
+  return arrayResult;
 }
 
 module.exports = {
-    nonAccentVietnamese,
-    replaceAll,
-    convertToURLFormat,
-    randomInt
+  nonAccentVietnamese,
+  replaceAll,
+  convertToURLFormat,
+  randomInt,
+  chunkArray
 };

@@ -142,29 +142,4 @@ describe(`Tests ${Model.modelName}`, function() {
         done();
       });
   });
-  it('Upload user avatar', done => {
-    fs.readFile('uploads/sampleAvatar.jpg', function read(err, data) {
-      if (err) {
-        return null;
-      }
-
-      var base64data = Buffer.from(data, 'binary').toString('base64');
-      const body = {
-        image: base64data,
-        imageFormat: "jpg",
-      };
-      chai
-        .request(`0.0.0.0:${process.env.PORT}`)
-        .post(`/Upload/uploadUserAvatar`)
-        .set('Authorization', token)
-        .send(body)
-        .end((err, res) => {
-          if ( err ) {
-            console.error(err);
-          }
-          checkResponseStatus(res, 200);
-          done();
-        });
-    });
-  });
 });

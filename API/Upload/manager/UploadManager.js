@@ -5,27 +5,22 @@
 const UploadFunctions = require("../UploadFunctions");
 const Logger = require('../../../utils/logging');
 
-async function uploadChapterImage(req) {
+async function uploadMediaFile(req) {
   return new Promise(async (resolve, reject) => {
     try {
       // booksChapterUrl: Joi.string(),
-      const imageData = req.payload.booksImage;
+      const imageData = req.payload.imageData;
       const imageFormat = req.payload.imageFormat;
-      const booksChapterUrl = req.payload.booksChapterUrl;
+      
       if (!imageData) {
         reject('do not have book data');
         return;
       }
 
-      if (!booksChapterUrl) {
-        reject('do not have book chapter url');
-        return;
-      }
-
       var originaldata = Buffer.from(imageData, 'base64');
-      let newChapterImage = await UploadFunctions.uploadNewChapterImage(booksChapterUrl, originaldata, imageFormat);
-      if (newChapterImage) {
-        resolve(newChapterImage);
+      let newMediaUrl = await UploadFunctions.uploadMediaFile(originaldata, imageFormat);
+      if (newMediaUrl) {
+        resolve(newMediaUrl);
       } else {
         reject('failed to upload')
       }
@@ -36,6 +31,7 @@ async function uploadChapterImage(req) {
     }
   });
 };
+
 async function uploadUserAvatar(req) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -55,9 +51,9 @@ async function uploadUserAvatar(req) {
       }
 
       var originaldata = Buffer.from(imageData, 'base64');
-      let newChapterImage = await UploadFunctions.uploadMediaFile(originaldata, imageFormat);
-      if (newChapterImage) {
-        resolve(newChapterImage);
+      let newAvatar = await UploadFunctions.uploadMediaFile(originaldata, imageFormat);
+      if (newAvatar) {
+        resolve(newAvatar);
       } else {
         reject('failed to upload')
       }
@@ -68,7 +64,8 @@ async function uploadUserAvatar(req) {
     }
   });
 };
+
 module.exports = {
-  uploadChapterImage,
+  uploadMediaFile,
   uploadUserAvatar
 };

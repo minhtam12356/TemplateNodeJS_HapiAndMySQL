@@ -40,6 +40,14 @@ module.exports = [
     { method: 'POST', path: '/AppUsers/changePasswordUser', config: AppUsers.changePasswordUser },
     { method: 'POST', path: '/AppUsers/verify2FA', config: AppUsers.verify2FA },
     { method: 'GET', path: '/AppUsers/get2FACode', config: AppUsers.get2FACode },
+    //Customer Record APIs
+    { method: 'POST', path: '/CustomerMessage/insert', config: CustomerMessage.insert },
+    { method: 'POST', path: '/CustomerMessage/getList', config: CustomerMessage.find },
+    { method: 'POST', path: '/CustomerMessage/getDetailById', config: CustomerMessage.findById },
+    { method: 'POST', path: '/CustomerMessage/sendsms', config: CustomerMessage.sendsms },
+    { method: 'POST', path: '/CustomerMessage/sendMessageByFilter', config: CustomerMessage.sendMessageByFilter },
+    { method: 'POST', path: '/CustomerMessage/sendMessageByCustomerList', config: CustomerMessage.sendMessageByCustomerList },
+    { method: 'POST', path: '/CustomerMessage/findTemplates', config: CustomerMessage.findTemplates },
 
     //Role APIs
     { method: 'POST', path: '/Role/insert', config: Role.insert },
@@ -70,13 +78,14 @@ module.exports = [
     { method: 'POST', path: '/BooksCategory/updateById', config: BooksCategory.updateById },
 
     //Upload APIs
-    { method: 'POST', path: '/Upload/uploadChapterImage', config: Upload.uploadChapterImage },
-    { method: 'POST', path: '/Upload/uploadUserAvatar', config: Upload.uploadUserAvatar },
+    { method: 'POST', path: '/Upload/uploadMediaFile', config: Upload.uploadMediaFile },
     {
         method: 'GET',
-        path: '/uploads/{filename}',
+        path: '/{path*}',
         handler: function (request, h) {
-            return h.file(`uploads/${request.params.filename}`);
+            return h.file(`${request.params.path}`);
         }
+    },
+    { method: 'POST', path: '/Upload/uploadUserAvatar', config: Upload.uploadUserAvatar },
     }
 ];

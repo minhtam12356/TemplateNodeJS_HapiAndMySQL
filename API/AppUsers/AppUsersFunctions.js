@@ -140,8 +140,8 @@ async function createNewUser(userData) {
             //create new user
             let addResult = await AppUsersResourceAccess.insert(userData);
             if (addResult === undefined) {
-                reject("can not insert user");
-                return;
+                Logger.info("can not insert user " + JSON.stringify(userData));
+                resolve(undefined);
             } else {
                 let newUserId = addResult[0];
                 await generate2FACode(newUserId);
@@ -150,8 +150,9 @@ async function createNewUser(userData) {
             }
             return;
         } catch (e) {
-            Logger.error('AppUserFunctions', e);
-            reject("failed");
+            Logger.info('AppUserFunctions', e);
+            Logger.info("can not insert user ", JSON.stringify(userData));
+            resolve(undefined);
         }
     });
 }

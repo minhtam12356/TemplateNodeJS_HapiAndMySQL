@@ -14,8 +14,11 @@ async function insert(req) {
 
       let insertResult = AppUsersFunctions.createNewUser(userData);
 
-      resolve(insertResult);
-
+      if (insertResult) {
+        resolve(insertResult);
+      } else {
+        reject("failed")
+      }
       return;
     } catch (e) {
       Logger.error(__filename, e);

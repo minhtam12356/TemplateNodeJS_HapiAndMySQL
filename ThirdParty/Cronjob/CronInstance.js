@@ -2,9 +2,9 @@ const cron = require('node-cron');
 const { spawn } = require('child_process');
 const Logger = require('../../utils/logging');
 
-function executeJob(jobLocation) {
+function executeJob(jobLocation, args) {
   Logger.info('Cron Instance', 'execute job : ' + jobLocation);
-  const ls = spawn('node', [jobLocation]);
+  const ls = spawn('node', [jobLocation, args]);
 
   ls.stdout.on('data', data => {
     Logger.info('Cron Instance',`stdout: ${data}`);

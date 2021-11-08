@@ -9,7 +9,7 @@ const Response = require("../../Common/route/response").setup(Manager);
 const CommonFunctions = require('../../Common/CommonFunctions');
 
 module.exports = {
-  uploadChapterImage: {
+  uploadMediaFile: {
     tags: ["api", `${moduleName}`],
     description: `${moduleName} upload media`,
     pre: [{ method: CommonFunctions.verifyToken }],
@@ -21,13 +21,12 @@ module.exports = {
         authorization: Joi.string(),
       }).unknown(),
       payload: Joi.object({
-        booksChapterUrl: Joi.string(),
-        booksImage: Joi.binary().encoding('base64'),
+        imageData: Joi.binary().encoding('base64'),
         imageFormat: Joi.string().default('png')
       })
     },
     handler: function (req, res) {
-      Response(req, res, "uploadChapterImage");
+      Response(req, res, "uploadMediaFile");
     },
   },
   uploadUserAvatar: {
