@@ -2,16 +2,14 @@
  * Created by A on 7/18/17.
  */
 'use strict'
+require('dotenv').config();
 const Logger    = require('./utils/logging');
 const Glue      = require('glue');
 const Routes    = require('./config/routes');
 const Manifest  = require('./config/manifest');
 const AppConfig = require('./config/app');
-const dotenv    = require('dotenv').config();
+
 const MQTTBroker = require('./ThirdParty/MQTTBroker/MQTTBroker');
-const MQTTClient = require('./ThirdParty/MQTTClient/MQTTClient');
-const TextToSpeechClient = require('./ThirdParty/TextToSpeech/TextToSpeechClient');
-const EmailClient = require('./ThirdParty/Email/EmailClient');
 const CronJob   = require('./cron/index');
 
 Glue.compose(Manifest, {relativeTo: __dirname}, (err, server) => {
