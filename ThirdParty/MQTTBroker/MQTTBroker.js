@@ -8,7 +8,7 @@ const WEBSOCKET_SSL_PORT = parseInt(process.env.WEBSOCKET_SSL_PORT || 6666);
 const WEBSOCKET_PORT = parseInt(process.env.WEBSOCKET_PORT || 7777);
 
 const ws = require('websocket-stream');
-const fs = require("fs");
+const fs    = require("fs");
 const aedes = require('aedes')();
 // const aedes = require('aedes')({
 //   authenticate: (client, username, password, callback) => {
@@ -46,7 +46,7 @@ async function initHttpsServer() {
           resolve(undefined);
           return;
         }
-        fs.readFile(`${process.env.KEY_PATH}openssl/${process.env.NODE_ENV}/cert.pem`, (err, certData) => {
+        fs.readFile(`${process.env.KEY_PATH}openssl/${process.env.NODE_ENV}/fullchain.pem`, (err, certData) => {
           if (err) {
             console.error(err);
             resolve(undefined);
@@ -68,7 +68,7 @@ async function initHttpsServer() {
       // //Websocket SSL 'WSS'
       // const httpsServer = require('https').createServer({
       //   "key": fs.readFileSync(`${process.env.KEY_PATH}openssl1/privkey.pem`),
-      //   "cert": fs.readFileSync(`${process.env.KEY_PATH}openssl1/cert.pem`),
+      //   "cert": fs.readFileSync(`${process.env.KEY_PATH}openssl1/fullchain.pem`),
       // });
       // ws.createServer({ server: httpsServer }, aedes.handle)
       // httpsServer.listen(WEBSOCKET_SSL_PORT, function () {

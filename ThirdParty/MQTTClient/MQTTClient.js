@@ -12,9 +12,9 @@ var mqtt = require('mqtt')
 // })
 
 //WSS Client
-var client  = mqtt.connect('wss://vtss-station-server.makefamousapp.com:10666', {
-  rejectUnauthorized: false
-})
+// var client  = mqtt.connect('wss://vtss-station-server.makefamousapp.com:10666', {
+//   rejectUnauthorized: false
+// })
 
 client.on('connect', function () {
   console.log("connected")

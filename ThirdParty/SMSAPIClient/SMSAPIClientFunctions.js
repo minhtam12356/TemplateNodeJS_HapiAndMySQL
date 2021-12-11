@@ -61,7 +61,7 @@ async function checkSMS(smsId) {
   });
 }
 
-async function sendSMS(message, phoneNumberList) {
+async function sendSMS(message, phoneNumberList, customClient) {
   // username String Tên đăng nhập hệ thống Có phân biệt chữ hoa chữ thường
   // password String Mật khẩu đăng nhập
   // brandname String Tên Brandname Có phân biệt chữ hoa chữ thường
@@ -73,10 +73,24 @@ async function sendSMS(message, phoneNumberList) {
   // chấm phẩy “;” và không có khoảng trắng
   let sendTime = moment().format('YYYYMMDDhhmmss');
 
-  let body = {
+  let _smsApiUrl = SMS_API_URL;
+  let _smsAuth = {
     "username": SMS_API_USERNAME,
     "password": SMS_API_PASSWORD,
     "brandname": SMS_API_BRAND,
+  };
+
+  if (customClient) {
+    _smsAuth = {
+      "username": customClient.smsApiUsername,
+      "password": customClient.smsApiPassword,
+      "brandname": customClient.smsAPIBrand,
+    }
+    _smsApiUrl = customClient.smsApiUrl;
+  }
+
+  let body = {
+    ..._smsAuth,
     "textmsg": _nonAccentVietnamese(message),
     "sendtime": sendTime,
     "isunicode": 0,
@@ -84,7 +98,7 @@ async function sendSMS(message, phoneNumberList) {
   };
   return new Promise((resolve, reject) => {
     chai
-      .request(SMS_API_URL)
+      .request(_smsApiUrl)
       .post(`/sendsms`)
       .send(body)
       .end((err, res) => {
@@ -106,6 +120,33 @@ async function sendSMS(message, phoneNumberList) {
   });
 }
 
+async function createClient(smsApiUrl, smsApiUsername, smsApiPassword, smsAPIBrand) {
+  const invalidClient = undefined;
+  if (smsApiUrl === undefined || smsApiUrl === null || smsApiUrl.trim() === "") {
+    return invalidClient;
+  }
+
+  if (smsApiUsername === undefined || smsApiUsername === null || smsApiUsername.trim() === "") {
+    return invalidClient;
+  }
+
+  if (smsApiPassword === undefined || smsApiPassword === null || smsApiPassword.trim() === "") {
+    return invalidClient;
+  }
+
+  if (smsAPIBrand === undefined || smsAPIBrand === null || smsAPIBrand.trim() === "") {
+    return invalidClient;
+  }
+  
+  const newClient = {
+    smsApiUrl: smsApiUrl,
+    smsApiUsername: smsApiUsername,
+    smsApiPassword: smsApiPassword,
+    smsAPIBrand: smsAPIBrand
+  }
+  return newClient;
+}
 module.exports = {
-  sendSMS
+  sendSMS,
+  createClient
 };

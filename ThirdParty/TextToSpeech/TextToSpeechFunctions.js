@@ -60,7 +60,7 @@ async function resetDefaultSpeechFile() {
 }
 
 module.exports = {
-  getPlateSpeechUrls,
+  getSpeechesUrls,
   createProcessSpeechFile,
   resetDefaultSpeechFile
 };
