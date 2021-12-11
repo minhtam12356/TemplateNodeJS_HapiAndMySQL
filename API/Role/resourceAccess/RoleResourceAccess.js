@@ -75,10 +75,46 @@ async function count(filter, order) {
   return await Common.count(tableName, primaryKeyField, filter, order);
 }
 
+function _makeQueryBuilderByFilter(filter, skip, limit, order) {
+  let queryBuilder = DB(tableName);
+  let filterData = filter ? JSON.parse(JSON.stringify(filter)) : {};
+
+  if(filterData.roleName) {
+    queryBuilder.where('roleName', 'like', `%${filter.roleName}%`);
+    delete filterData.roleName
+  }
+  queryBuilder.where(filterData);
+  queryBuilder.where({ isDeleted: 0 });
+  if (limit) {
+    queryBuilder.limit(limit);
+  }
+  if (skip) {
+    queryBuilder.offset(skip);
+  }
+  if (order && order.key !== '' && order.value !== '' && (order.value === 'desc' || order.value === 'asc')) {
+    queryBuilder.orderBy(order.key, order.value);
+  } else {
+    queryBuilder.orderBy("createdAt", "desc")
+  }
+
+  return queryBuilder;
+}
+
+async function customSearch(filter, skip, limit, order) {
+  let query = _makeQueryBuilderByFilter(filter, skip, limit, order);
+  return await query.select();
+}
+
+async function customCount(filter, order) {
+  let query = _makeQueryBuilderByFilter(filter, undefined, undefined, order);
+  return await query.count(`${primaryKeyField} as count`);
+}
 module.exports = {
   insert,
   find,
   count,
   updateById,
-  initDB
+  initDB,
+  customSearch,
+  customCount
 };

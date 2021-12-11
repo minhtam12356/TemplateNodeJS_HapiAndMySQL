@@ -29,8 +29,8 @@ async function find(req) {
       let limit = req.payload.limit;
       let order = req.payload.order;
 
-      let roles = await RoleResourceAccess.find(filter, skip, limit, order);
-      let rolesCount = await RoleResourceAccess.count(filter, order);
+      let roles = await RoleResourceAccess.customSearch(filter, skip, limit, order);
+      let rolesCount = await RoleResourceAccess.customCount(filter, order);
       if (roles && rolesCount) {
         resolve({data: roles, total: rolesCount[0].count});
       }else{
