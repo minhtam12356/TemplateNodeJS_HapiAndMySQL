@@ -5,10 +5,38 @@
 const Joi = require('joi')
 const MessageCustomerView = require('../resourceAccess/MessageCustomerView');
 const MessageCustomer = require('../resourceAccess/MessageCustomerResourceAccess');
+const CustomerMessage = require('../resourceAccess/CustomerMessageResourceAccess');
 const CustomerRecord = require('../../CustomerRecord/resourceAccess/CustomerRecordResourceAccess');
 const { MESSAGE_STATUS, MESSAGE_CATEGORY } = require('../CustomerMessageConstant');
 const SMSAPIClientFunctions = require('../../../ThirdParty/SMSAPIClient/SMSAPIClientFunctions');
 const MessageFunction = require('../CustomerMessageFunctions');
+const Logger = require('../../../utils/logging');
+
+async function _cancelAllSMSMessage(station) {
+  let messageList = await CustomerMessage.find({
+    customerMessageCategories: MESSAGE_CATEGORY.SMS,
+    customerMessageStatus: MESSAGE_STATUS.NEW
+  });
+
+  for (let i = 0; i < messageList.length; i++) {
+    const messageObj = messageList[i];
+    let failureFilter = {
+      messageSendStatus: MESSAGE_STATUS.NEW,
+      messageId: messageObj.customerMessageId,
+      customerStationId: station.stationsId
+    };
+  
+    let updatedMessageData = {
+      messageSendStatus: MESSAGE_STATUS.CANCELED,
+      messageNote: `Something wrong with SMS Config.`,
+    }
+    await MessageCustomer.updateAll(updatedMessageData, failureFilter);
+    await CustomerMessage.updateById(messageObj.customerMessageId, {
+      customerMessageStatus: MESSAGE_STATUS.CANCELED
+    });
+  }
+
+}
 
 async function sendMessageSMSToCustomer(station) {
   console.log(`sendMessageSMSToCustomer ${station.stationsId}`);
@@ -18,6 +46,41 @@ async function sendMessageSMSToCustomer(station) {
     if (station.stationsId === 0) {
       resolve("OK");
       return;
+    }
+
+    //Failure all message if station do not use SMS
+    if (station.stationEnableUseSMS === 0) {
+      await _cancelAllSMSMessage(station);
+      resolve("OK");
+      return;
+    }
+
+    let _customSMSClient = undefined;
+
+    const ENABLED = 1;
+    //Get sms client info if station use custom sms client
+    if (station.stationUseCustomSMSBrand === ENABLED) {
+      if (station.stationCustomSMSBrandConfig && station.stationCustomSMSBrandConfig !== null && station.stationCustomSMSBrandConfig.trim() !== "") {
+        try {
+          _customSMSClient = await SMSAPIClientFunctions.createClient(
+            station.stationCustomSMSBrandConfig.smsUrl,
+            station.stationCustomSMSBrandConfig.smsUserName,
+            station.stationCustomSMSBrandConfig.smsPassword,
+            station.stationCustomSMSBrandConfig.smsBrand
+          );
+          if (_customSMSClient === undefined) {
+            Logger.info(`station ${station.stationsId} enable custom but have wrong sms config`)
+            await _cancelAllSMSMessage(station);
+            resolve("OK");
+            return;
+          } 
+        } catch (error) {
+          Logger.info(`station ${station.stationsId} enable custom but convert custom sms config failed`)
+          await _cancelAllSMSMessage(station);
+          resolve("OK");
+          return;
+        }
+      }
     }
 
     let messageList = await MessageCustomerView.find({
@@ -51,7 +114,8 @@ async function sendMessageSMSToCustomer(station) {
         if (Joi.string().validate(_customerMessage.customerMessagePhone).error === null) {
           //if we disable SMS
           if (process.env.SMS_ENABLE) {
-            let sendResult = await SMSAPIClientFunctions.sendSMS(messageContent, [_customerMessage.customerMessagePhone]);
+            let sendResult = undefined;
+            sendResult = await SMSAPIClientFunctions.sendSMS(messageContent, [_customerMessage.customerMessagePhone], _customSMSClient);
 
             //if send success
             if (sendResult !== undefined) {

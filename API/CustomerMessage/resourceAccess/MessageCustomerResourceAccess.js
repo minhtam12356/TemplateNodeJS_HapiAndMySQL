@@ -124,7 +124,22 @@ async function customSearch(filter, skip, limit, startDate, endDate, searchText,
 
 async function customCount(filter, startDate, endDate, searchText, order) {
   let query = _makeQueryBuilderByFilter(filter, undefined, undefined, startDate, endDate, searchText, order);
-  return await query.count(`${primaryKeyField} as count`);
+  return new Promise((resolve, reject) => {
+    try {
+      query.count(`${primaryKeyField} as count`)
+        .then(records => {
+          resolve(records);
+        });
+    } catch (e) {
+      Logger.error("ResourceAccess", `DB COUNT ERROR: ${tableName} : ${JSON.stringify(filter)} - ${JSON.stringify(order)}`);
+      Logger.error("ResourceAccess", e);
+      reject(undefined);
+    }
+  });
+}
+
+async function updateAll(data, filter) {
+  return await Common.updateAll(tableName, data, filter);
 }
 
 module.exports = {
@@ -137,5 +152,5 @@ module.exports = {
   modelName: tableName,
   customSearch,
   customCount,
- 
+  updateAll
 };

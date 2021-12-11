@@ -32,8 +32,8 @@ const messageTemplate = [
 function _importDataForMessage(customer) {
   return {
     customerMessageEmail: customer.customerRecordEmail,
-    customerMessagePlateNumber: customer.customerRecordPhone,
-    customerMessagePhone: customer.customerRecordPlatenumber,
+    customerMessagePhone: customer.customerRecordPhone,
+    customerMessagePlateNumber: customer.customerRecordPlatenumber,
     customerId: customer.customerRecordId,
   }
 }
@@ -138,6 +138,7 @@ async function sendMessageToManyCustomer(customerList, stationsId, customerMessa
     return FUNC_SUCCESS;
   }
 
+  //create new MessageCustomer object 
   let messageId = await _createNewMessage(stationsId, customerMessageContent, customerMessageCategories, customerMessageTemplateId);
   if (messageId === undefined) {
     console.error(`can not create new message`);
@@ -145,6 +146,8 @@ async function sendMessageToManyCustomer(customerList, stationsId, customerMessa
   }
 
   let messageList = [];
+
+  //get Message content and split into 1 message for each customer
   for (var i = 0; i < customerList.length; i++) {
     const customer = customerList[i];
     let customerMessage = {
@@ -155,7 +158,7 @@ async function sendMessageToManyCustomer(customerList, stationsId, customerMessa
     messageList.push(customerMessage);
   }
 
-  //Chunk array into multiple batches of 100
+  //Chunk messageList array into multiple batches of 100 to prevent DB Crash
   if (messageList.length > 100) {
     let batches = await ApiUtilsFunctions.chunkArray(messageList, 100);
     for (var i = 0; i < batches.length; i++) {
@@ -164,7 +167,12 @@ async function sendMessageToManyCustomer(customerList, stationsId, customerMessa
   } else {
     await MessageCustomerResourceAccess.insert(messageList);
   }
-  return FUNC_SUCCESS;
+
+  if (messageList.length > 0) {
+    return messageList.length;
+  } else {
+    return FUNC_SUCCESS;
+  }
 }
 
 async function getTemplateMessages() {

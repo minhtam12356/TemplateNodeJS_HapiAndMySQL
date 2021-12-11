@@ -8,7 +8,7 @@ const SMSAPIFunctions = require('../../../ThirdParty/SMSAPIClient/SMSAPIClientFu
 const CustomerRecordResourceAccess = require("../../CustomerRecord/resourceAccess/CustomerRecordResourceAccess")
 const SystemAppLogFunctions = require('../../SystemAppChangedLog/SystemAppChangedLogFunctions');
 const CustomerMessageFunctions = require('../CustomerMessageFunctions');
-const formatDate = require("../../../ThirdParty/FormatDate/FormatDate")
+const utilFunctions = require("../../../API/ApiUtils/utilFunctions");
 async function sendsms(req) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -55,10 +55,10 @@ async function find(req) {
       let endDate = req.payload.endDate;
       let searchText = req.payload.searchText;
       if(startDate){
-        startDate = formatDate.FormatDate(startDate)
+        startDate = utilFunctions.FormatDate(startDate)
       }
       if(endDate){
-        endDate = formatDate.FormatDate(endDate)
+        endDate = utilFunctions.FormatDate(endDate)
       }
       //only get data of current station
       if (filter && req.currentUser.stationsId) {
@@ -120,16 +120,42 @@ async function sendMessageByFilter(req) {
     try {
       let filter = req.payload.filter;
       let userStationId = req.currentUser.stationsId;
+
+      //validate payload to prevent crash
+      if (filter === undefined) {
+        filter = {};
+      }
+
+      //do not have permission for different station
+      if (userStationId === undefined) {
+        console.error(`sendMessageByFilter do not have stationId`);
+        reject("sendMessageByFilter do not have stationId");
+        return;
+      }
+      
       let customerMessageContent = req.payload.customerMessageContent
       let customerMessageCategories = req.payload.customerMessageCategories;
 
-      //retrieve info for customer list
-      let customerList = await CustomerRecordResourceAccess.find(filter, undefined, undefined);
+      //retrieve info for customer list for this station only
+      let customerList = await CustomerRecordResourceAccess.customSearch({
+        customerStationId: userStationId
+      }, undefined, undefined, filter.startDate, filter.endDate, filter.searchText);
+      
+      //filter into waiting list
+      let _waitToSendList = [];
+      for (let i = 0; i < customerList.length; i++) {
+        const customer = customerList[i];
+        //VTSS-128 không gửi tin nhắn cho xe không có ngày hết hạn
+        if (customer.customerRecordCheckExpiredDate === null || customer.customerRecordCheckExpiredDate.trim() === "") {
+          continue;
+        }
+        _waitToSendList.push(customer);
+      }
 
       //Send message to many customer
-      let result = await CustomerMessageFunctions.sendMessageToManyCustomer(customerList, userStationId, customerMessageContent, customerMessageCategories, req.payload.customerMessageTemplateId);
+      let result = await CustomerMessageFunctions.sendMessageToManyCustomer(_waitToSendList, userStationId, customerMessageContent, customerMessageCategories, req.payload.customerMessageTemplateId);
       if (result) {
-        resolve("success");
+        resolve(result);
       } else {
         reject("failed");
       }
@@ -155,6 +181,10 @@ async function sendMessageByCustomerList(req) {
       for (var i = 0; i < customerRecordIdList.length; i++) {
         let customer = await CustomerRecordResourceAccess.findById(customerRecordIdList[i]);
         if (customer) {
+          //VTSS-128 không gửi tin nhắn cho xe không có ngày hết hạn
+          if (customer.customerRecordCheckExpiredDate === null || customer.customerRecordCheckExpiredDate.trim() === "") {
+            continue;
+          }
           customerList.push(customer);
         }
       }
@@ -162,7 +192,7 @@ async function sendMessageByCustomerList(req) {
       //Send message to many customer
       let result = await CustomerMessageFunctions.sendMessageToManyCustomer(customerList, userStationId, customerMessageContent, customerMessageCategories, customerMessageTemplateId);
       if (result) {
-        resolve("success");
+        resolve(result);
       } else {
         reject("failed");
       }

@@ -119,7 +119,40 @@ async function customSearch(filter, skip, limit, startDate, endDate, searchText,
 
 async function customCount(filter, startDate, endDate, searchText, order) {
   let query = _makeQueryBuilderByFilter(filter, undefined, undefined, startDate, endDate, searchText, order);
-  return await query.count(`${primaryKeyField} as count`);
+  return new Promise((resolve, reject) => {
+    try {
+      query.count(`${primaryKeyField} as count`)
+        .then(records => {
+          resolve(records);
+        });
+    } catch (e) {
+      Logger.error("ResourceAccess", `DB COUNT ERROR: ${tableName} : ${JSON.stringify(filter)} - ${JSON.stringify(order)}`);
+      Logger.error("ResourceAccess", e);
+      reject(undefined);
+    }
+  });
+}
+
+async function customCountDistinct(fieldDistinct, filter, startDate, endDate, searchText) {
+  //override orderBy of default query
+  let order = {
+    key: `${fieldDistinct}`,
+    value: "asc"
+  };
+  let query = _makeQueryBuilderByFilter(filter, undefined, undefined, startDate, endDate, searchText, order);
+  return new Promise((resolve, reject) => {
+    try {
+      query.count(`${primaryKeyField} as count`).select(`${fieldDistinct}`).groupBy(`${fieldDistinct}`);
+      console.log(query.toString());
+      query.then(records => {
+          resolve(records);
+        });
+    } catch (e) {
+      Logger.error("ResourceAccess", `DB COUNT ERROR: ${tableName} : ${JSON.stringify(filter)} - ${JSON.stringify(order)}`);
+      Logger.error("ResourceAccess", e);
+      reject(undefined);
+    }
+  });
 }
 
 module.exports = {
@@ -132,5 +165,5 @@ module.exports = {
   modelName: tableName,
   customSearch,
   customCount,
- 
+  customCountDistinct
 };
