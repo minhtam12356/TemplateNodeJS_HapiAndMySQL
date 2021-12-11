@@ -7,6 +7,7 @@ const crypto = require("crypto");
 const otplib = require('otplib');
 
 const AppUsersResourceAccess = require("./resourceAccess/AppUsersResourceAccess");
+const RoleUserResource = require('./resourceAccess/RoleUserView');
 const QRCodeFunction = require('../../ThirdParty/QRCode/QRCodeFunctions');
 const TokenFunction = require('../ApiUtils/token');
 const Logger = require('../../utils/logging');
@@ -69,7 +70,7 @@ async function verifyCredentials(username, password) {
 
 async function retrieveUserDetail(appUserId) {
     //get user detial
-    let user = await AppUsersResourceAccess.find({ appUserId: appUserId });
+    let user = await RoleUserResource.find({ appUserId: appUserId });
     if (user && user.length > 0) {
         let foundUser = user[0];
         //create new login token
@@ -116,7 +117,7 @@ async function generate2FACode(appUserId) {
         if (QRCodeImage) {
             await AppUsersResourceAccess.updateById(appUserId, {
                 twoFACode: topSecret,
-                twoFAQR: process.env.HOST_NAME + `/User/get2FACode?appUserId=${appUserId}`
+                twoFAQR: process.env.HOST_NAME + `/User/get2FACode?id=${appUserId}`
             })
             return QRCodeImage;
         }
@@ -140,7 +141,7 @@ async function createNewUser(userData) {
             //create new user
             let addResult = await AppUsersResourceAccess.insert(userData);
             if (addResult === undefined) {
-                Logger.info("can not insert user " + JSON.stringify(userData));
+                Logger.info("insert failed " + JSON.stringify(userData));
                 resolve(undefined);
             } else {
                 let newUserId = addResult[0];
@@ -151,7 +152,7 @@ async function createNewUser(userData) {
             return;
         } catch (e) {
             Logger.info('AppUserFunctions', e);
-            Logger.info("can not insert user ", JSON.stringify(userData));
+            Logger.info("can not createNewUser ", JSON.stringify(userData));
             resolve(undefined);
         }
     });

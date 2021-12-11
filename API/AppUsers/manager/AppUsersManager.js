@@ -4,6 +4,7 @@
 "use strict";
 const AppUsersResourceAccess = require("../resourceAccess/AppUsersResourceAccess");
 const AppUsersFunctions = require("../AppUsersFunctions");
+const RoleUserResource = require('../resourceAccess/RoleUserView');
 const TokenFunction = require('../../ApiUtils/token');
 const Logger = require('../../../utils/logging');
 
@@ -34,11 +35,11 @@ async function find(req) {
       let skip = req.payload.skip;
       let limit = req.payload.limit;
       let order = req.payload.order;
-
-      let users = await AppUsersResourceAccess.find(filter, skip, limit, order);
-      let usersCount = await AppUsersResourceAccess.count(filter, order);
+      let searchText = req.payload.searchText;
+      let users = await AppUsersResourceAccess.customSearch(filter, skip, limit, searchText, order);
+      let usersCount = await AppUsersResourceAccess.customCount(filter, searchText, order);
       if (users && usersCount) {
-        resolve({ data: users, total: usersCount[0].count });
+        resolve({ data: users, total: usersCount });
       } else {
         resolve({ data: [], total: 0 });
       }
@@ -58,7 +59,7 @@ async function updateById(req) {
       if (updateResult) {
         resolve("success");
       } else {
-        resolve("failed to update user");
+        reject("failed to update user");
       }
 
     } catch (e) {
@@ -72,7 +73,12 @@ async function findById(req) {
   return new Promise(async (resolve, reject) => {
     try {
       foundUser = await AppUsersFunctions.retrieveUserDetail(req.payload.id);
-      resolve(foundUser);
+      if (foundUser) {
+        resolve(foundUser);
+      } else {
+        reject(`can not find user`);
+      }
+      
     } catch (e) {
       Logger.error(__filename, e);
       reject("failed");
@@ -325,6 +331,85 @@ async function loginZalo(req) {
   });
 };
 
+async function registerStationUser(req) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let userData = req.payload;
+
+      let insertResult = await AppUsersFunctions.createNewUser(userData);
+
+      if (insertResult) {
+        resolve(insertResult);
+      } else {
+        reject("failed")
+      }
+      return;
+    } catch (e) {
+      Logger.error(__filename, e);
+      reject("failed");
+    }
+  });
+};
+
+async function stationUserList(req) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let filter = req.payload.filter;
+      let skip = req.payload.skip;
+      let limit = req.payload.limit;
+      let order = req.payload.order;
+      let searchText = req.payload.searchText;
+      
+      let users = await RoleUserResource.customSearch(filter, skip, limit, searchText, order);
+      let usersCount = await RoleUserResource.customCount(filter, searchText, order);
+      if (users && usersCount) {
+        resolve({ data: users, total: usersCount });
+      } else {
+        resolve({ data: [], total: 0 });
+      }
+    } catch (e) {
+      Logger.error(__filename, e);
+      reject("failed");
+    }
+  });
+};
+
+async function updateStationUserById(req) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let userData = req.payload.data;
+      let appUserId = req.payload.id;
+      let updateResult = await AppUsersResourceAccess.updateById(appUserId, userData);
+      if (updateResult) {
+        resolve("success");
+      } else {
+        reject("failed to update user");
+      }
+
+    } catch (e) {
+      Logger.error(__filename, e);
+      reject("failed");
+    }
+  });
+};
+
+async function stationUserDetail(req) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let foundUser = await AppUsersFunctions.retrieveUserDetail(req.payload.id);
+      if (foundUser) {
+        resolve(foundUser);
+      } else {
+        reject(`can not find user`);
+      }
+      
+    } catch (e) {
+      Logger.error(__filename, e);
+      reject("failed");
+    }
+  });
+};
+
 module.exports = {
   insert,
   find,
@@ -339,4 +424,8 @@ module.exports = {
   loginGoogle,
   loginZalo,
   loginApple,
+  registerStationUser,
+  stationUserList,
+  updateStationUserById,
+  stationUserDetail,
 };

@@ -25,6 +25,7 @@ const updateSchema = {
   phoneNumber: Joi.string(),
   active: Joi.number().min(0).max(1),
   twoFACode: Joi.string(),
+  twoFAEnable: Joi.number().min(0).max(1),
   userAvatar: Joi.string().allow(''),
   telegramId: Joi.string(),
   isDeleted: Joi.number(),
@@ -83,6 +84,7 @@ module.exports = {
         filter: Joi.object(filterSchema),
         skip: Joi.number().default(0).min(0),
         limit: Joi.number().default(20).max(100),
+        searchText: Joi.string(),
         order: Joi.object({
           key: Joi.string()
             .default("createdAt")
@@ -282,9 +284,14 @@ module.exports = {
   get2FACode: {
     tags: ["api", `${moduleName}`],
     description: `get QrCode for 2FA ${moduleName}`,
+    validate: {
+      query: {
+        id: Joi.number(),
+      }
+    },
     handler: function (req, res) {
-      if(req.query.appUserId){
-        AppUsersFunctions.generate2FACode(req.query.appUserId).then((qrCode) => {
+      if(req.query.id){
+        AppUsersFunctions.generate2FACode(req.query.id).then((qrCode) => {
           if(qrCode){
             res.file(qrCode);
           }else{
@@ -294,6 +301,106 @@ module.exports = {
       }else{
         res("error").code(500);
       }
+    }
+  },
+  registerStationUser: {
+    tags: ["api", `${moduleName}`],
+    description: `register ${moduleName}`,
+    validate: {
+      payload: Joi.object({
+        lastName: Joi.string(),
+        firstName: Joi.string(),
+        username: Joi.string().alphanum().min(6).max(30).required(),
+        email: Joi.string().email().required(),
+        password: Joi.string().required(),
+        phoneNumber: Joi.string().required(),
+        stationsId: Joi.number().required().min(0),
+        appUserRoleId: Joi.number()
+      })
+    },
+    handler: function (req, res) {
+      if(SystemStatus.all === false){
+        res("maintain").code(500);
+        return;
+      }
+      Response(req, res, "registerStationUser");
+    }
+  },
+  stationUserList: {
+    tags: ["api", `${moduleName}`],
+    description: `update ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        filter: Joi.object(filterSchema),
+        skip: Joi.number().default(0).min(0),
+        limit: Joi.number().default(20).max(100),
+        searchText: Joi.string(),
+        order: Joi.object({
+          key: Joi.string()
+            .default("createdAt")
+            .allow(""),
+          value: Joi.string()
+            .default("desc")
+            .allow("")
+        })
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "stationUserList");
+    }
+  },
+  stationUserDetail: {
+    tags: ["api", `${moduleName}`],
+    description: `find by id ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        id: Joi.number().min(0)
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "stationUserDetail");
+    }
+  },
+  updateStationUserById: {
+    tags: ["api", `${moduleName}`],
+    description: `update ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        id: Joi.number().min(0),
+        data: Joi.object({
+          lastName: Joi.string(),
+          firstName: Joi.string(),
+          phoneNumber: Joi.string(),
+          active: Joi.number().min(0).max(1),
+          email: Joi.string(),
+          isDeleted: Joi.number(),
+          appUserRoleId: Joi.number()
+        }),
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "updateStationUserById");
     }
   },
 };
