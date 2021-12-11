@@ -2,7 +2,6 @@
  * Created by A on 7/18/17.
  */
 'use strict';
-const CustomerRecordResource = require('../CustomerRecord/resourceAccess/CustomerRecordResourceAccess');
 const AppLogResource = require('./resourceAccess/SystemAppChangedLogResourceAccess');
 const StaffResource = require('../Staff/resourceAccess/StaffResourceAccess');
 const AppUserResource = require('../AppUsers/resourceAccess/AppUsersResourceAccess');
