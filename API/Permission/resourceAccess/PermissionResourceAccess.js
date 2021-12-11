@@ -24,10 +24,15 @@ async function createTable() {
         .then(() => {
           Logger.info(`${tableName}`, `${tableName} table created done`);
           let initialPermissions = [
-            "Upload Chapter",
-            "Manage Books",
-            "Manage User",
-            "Manage Staff",
+            "View Dashboard",
+            "View Users",
+            "Edit Users",
+            "View Deposit",
+            "View Withdraw",
+            "View User Info",
+            "View Role",
+            "View Maintain",
+            "View Payment Method",
           ];
           let permissionArr = [];
           for (let i = 0; i < initialPermissions.length; i++) {

@@ -8,7 +8,12 @@ const Logger = require('../../../utils/logging');
 async function insert(req) {
   return new Promise(async (resolve, reject) => {
     try {
-      resolve("success");
+      let permission = await PermissionResourceAccess.insert(req.payload);
+      if(permission) {
+        resolve("success");
+      } else {
+        reject("Failed");
+      }
     } catch (e) {
       Logger.error(__filename, e);
       reject("failed");
