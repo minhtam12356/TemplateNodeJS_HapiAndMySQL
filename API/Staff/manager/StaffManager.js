@@ -12,6 +12,10 @@ async function insert(req) {
   return new Promise(async (resolve, reject) => {
     try {
       let staffData = req.payload;
+      if(staffData.roleId && staffData.roleId === 1) {
+        reject("can not insert staff");
+        return;
+      }
 
       const NOT_VALID = false;
       if(StaffFunctions.isValidRole(staffData.roleId) === NOT_VALID){
@@ -46,8 +50,8 @@ async function find(req) {
       let limit = req.payload.limit;
       let order = req.payload.order;
 
-      let staffs = await RoleStaffView.find(filter, skip, limit, order);
-      let staffsCount = await RoleStaffView.count(filter, order);
+      let staffs = await RoleStaffView.customSearch(filter, skip, limit, order);
+      let staffsCount = await RoleStaffView.customCount(filter, order);
       if (staffs && staffsCount) {
         resolve({data: staffs, total: staffsCount[0].count});
       }else{
@@ -77,7 +81,7 @@ async function updateById(req) {
       if (updateResult) {
         resolve("success");
       } else {
-        resolve("failed to update staff");
+        reject("failed to update staff");
       }
       return;
     } catch (e) {
@@ -121,6 +125,10 @@ async function loginStaff(req) {
       let foundStaff = await StaffFunctions.verifyCredentials(userName, password);
 
       if (foundStaff) {
+        if (!foundStaff.active) {
+          reject("failed");
+        }
+
         //create new login token
         let token = TokenFunction.createToken(foundStaff);
 
@@ -175,6 +183,44 @@ async function changePasswordStaff(req) {
   });
 };
 
+async function deleteStaffById(req) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let staffId = req.payload.id;
+
+      let result = StaffResourceAccess.updateById(staffId, { isDeleted: 1 });
+      if (result) {
+        resolve(result);
+        return;
+      }
+      reject("delete failed")
+    } catch (e) {
+      Logger.error(__filename, e);
+      reject("failed");
+    }
+  });
+}
+
+async function changePasswordUserOfStaff(req) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let appUserId = req.payload.appUserId
+      let newPassword = req.payload.newPassword;
+      //verify credential
+      let result = await StaffFunctions.changePasswordUserOfStaff(appUserId,newPassword);
+      if(result){
+        resolve("success")
+      }
+      else{
+        resolve("failse is change password user")
+      }
+    } catch (e) {
+      Logger.error(__filename, e);
+      reject("failed");
+    }
+  });
+};
+
 module.exports = {
   insert,
   find,
@@ -184,4 +230,5 @@ module.exports = {
   loginStaff,
   resetPasswordStaff,
   changePasswordStaff,
+  deleteStaffById
 };

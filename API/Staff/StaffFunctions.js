@@ -41,7 +41,7 @@ async function verifyCredentials(username, password) {
 }
 
 async function changeStaffPassword(staffData, newPassword) {
-    let newHashPassword = UserFunctions.hashPassword(newPassword);
+    let newHashPassword = hashPassword(newPassword);
 
     let result = await StaffResourceAccess.updateById(staffData.staffId, { password: newHashPassword });
 

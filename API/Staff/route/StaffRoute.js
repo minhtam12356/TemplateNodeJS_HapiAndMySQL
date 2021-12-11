@@ -12,10 +12,9 @@ const insertSchema = {
   lastName: Joi.string(),
   firstName: Joi.string(),
   username: Joi.string().alphanum().min(6).max(30).required(),
-  email: Joi.string().email().required(),
+  email: Joi.string().email(),
   password: Joi.string().required(),
-  phoneNumber: Joi.string().required(),
-  roleId: Joi.number().required(),
+  phoneNumber: Joi.string(),
 };
 
 const updateSchema = {
@@ -33,7 +32,9 @@ const updateSchema = {
 const filterSchema = {
   active: Joi.number().min(0).max(1),
   username: Joi.string().alphanum(),
-  email: Joi.string().email(),
+  firstName: Joi.string(),
+  lastName: Joi.string(),
+  email: Joi.string(),
   phoneNumber: Joi.string(),
   roleId: Joi.number(),
 };
@@ -42,7 +43,7 @@ module.exports = {
   insert: {
     tags: ["api", `${moduleName}`],
     description: `insert ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }],
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -50,7 +51,10 @@ module.exports = {
       headers: Joi.object({
         authorization: Joi.string(),
       }).unknown(),
-      payload: Joi.object(insertSchema)
+      payload: Joi.object({
+        ...insertSchema,
+        roleId: Joi.number().default(0)
+      })
     },
     handler: function (req, res) {
       Response(req, res, "insert");
@@ -59,7 +63,7 @@ module.exports = {
   updateById: {
     tags: ["api", `${moduleName}`],
     description: `update ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }],
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -79,7 +83,7 @@ module.exports = {
   find: {
     tags: ["api", `${moduleName}`],
     description: `update ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }],
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -108,7 +112,7 @@ module.exports = {
   findById: {
     tags: ["api", `${moduleName}`],
     description: `find by id ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }],
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -164,7 +168,7 @@ module.exports = {
   changePasswordStaff: {
     tags: ["api", `${moduleName}`],
     description: `change password ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }],
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -182,4 +186,44 @@ module.exports = {
       Response(req, res, "changePasswordStaff");
     }
   },
+  deleteById: {
+    tags: ["api", `${moduleName}`],
+    description: `delete ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        id: Joi.number()
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "deleteStaffById");
+    }
+  },
+  changePasswordUserStaff: {
+    tags: ["api", `${moduleName}`],
+    description: `change password User${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        appUserId: Joi.number().required(),
+        newPassword: Joi.string().required(),
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "changePasswordUserOfStaff");
+    }
+  },
+  
 };
