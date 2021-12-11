@@ -82,7 +82,7 @@ module.exports = {
   find: {
     tags: ["api", `${moduleName}`],
     description: `update ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyAgentOrStaffToken }],
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -204,7 +204,7 @@ module.exports = {
   summaryUser: {
     tags: ["api", `${moduleName}`],
     description: `summaryUser ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyAgentOrStaffToken }],
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -225,7 +225,7 @@ module.exports = {
   summaryAll: {
     tags: ["api", `${moduleName}`],
     description: `summaryAll ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyAgentOrStaffToken }],
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
     auth: {
       strategy: 'jwt',
     },
