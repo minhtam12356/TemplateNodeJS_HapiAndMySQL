@@ -8,7 +8,7 @@ const Logger = require('../../utils/logging');
 let systemStatus = {
   all: true,
   liveGame: true,
-  enableGoogleAds: true,
+  deposit: true,
   transfer: true,
   withdraw: true,
   signup: true
@@ -35,11 +35,11 @@ async function maintainLiveGame(enable){
 }
 
 //Maintain button for		Deposit
-async function maintainGoogleAds(enable){
+async function maintainDeposit(enable){
   if(enable === true){
-    systemStatus.enableGoogleAds = true
+    systemStatus.deposit = true
   }else{
-    systemStatus.enableGoogleAds = false
+    systemStatus.deposit = false
   }
   Logger.info("Maintain", systemStatus);
 }
@@ -76,7 +76,7 @@ async function maintainSignup(enable){
 
 module.exports = {
   maintainAll,
-  maintainGoogleAds,
+  maintainDeposit,
   maintainLiveGame,
   maintainTransfer,
   maintainWithdraw,

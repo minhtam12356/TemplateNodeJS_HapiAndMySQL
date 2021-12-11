@@ -17,10 +17,10 @@ async function maintainAll(req) {
   });
 };
 
-async function maintainGoogleAds(req) {
+async function maintainDeposit(req) {
   return new Promise(async (resolve, reject) => {
     try {
-      MaintainFunctions.maintainGoogleAds(req.payload.status);
+      MaintainFunctions.maintainDeposit(req.payload.status);
       resolve("success");
     } catch (e) {
       Logger.error(__filename, e);
@@ -90,7 +90,7 @@ async function getSystemStatus(req) {
 
 module.exports = {
   maintainAll,
-  maintainGoogleAds,
+  maintainDeposit,
   maintainLiveGame,
   maintainTransfer,
   maintainWithdraw,
