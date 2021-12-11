@@ -12,18 +12,26 @@ const knex = require('knex')({
         database : process.env.DB_NAME,
         port: process.env.DB_PORT
     },
-    pool: { min: 0, max: 20 }
+    pool: {
+      afterCreate: function(connection, callback) {
+        connection.query(`SET time_zone = '+7:00';`, function(err) {
+          callback(err, connection);
+        });
+      },
+      min: 0,
+      max: 20
+   }
 });
 
 function timestamps(table) {
     table
-        .timestamp('updatedAt')
+        .timestamp('updatedAt',{ useTz: true })
         .defaultTo(knex.raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
-    table.timestamp('createdAt').defaultTo(knex.fn.now());
-    table.integer('isHidden').defaultTo(0);
-    table.integer('isDeleted').defaultTo(0);
+    table.timestamp('createdAt',{ useTz: true }).defaultTo(knex.fn.now());
     table.index('createdAt');
     table.index('updatedAt');
+    table.integer('isHidden').defaultTo(0);
+    table.integer('isDeleted').defaultTo(0);
     table.index('isHidden');
     table.index('isDeleted');
 }
