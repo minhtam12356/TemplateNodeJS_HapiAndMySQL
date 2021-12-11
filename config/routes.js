@@ -166,7 +166,6 @@ module.exports = [
             return h.file(`${request.params.path}`);
         }
     },
-    { method: 'POST', path: '/Upload/uploadUserAvatar', config: Upload.uploadUserAvatar },
     //Download APIs
     { method: 'POST', path: '/Download/downloadBookReport', config: Download.downloadBookReport },
     {
