@@ -45,7 +45,7 @@ describe(`Tests Upload`, function() {
   });
 
   it('Upload user avatar', done => {
-    fs.readFile('uploads/VTSS.png', function read(err, data) {
+    fs.readFile('uploads/Sample.png', function read(err, data) {
       if (err) {
         return null;
       }
@@ -57,7 +57,7 @@ describe(`Tests Upload`, function() {
       };
       chai
         .request(`0.0.0.0:${process.env.PORT}`)
-        .post(`/Upload/uploadUserAvatar`)
+        .post(`/Upload/uploadMediaFile`)
         .set('Authorization', token)
         .send(body)
         .end((err, res) => {

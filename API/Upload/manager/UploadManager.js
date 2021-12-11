@@ -9,9 +9,9 @@ async function uploadMediaFile(req) {
   return new Promise(async (resolve, reject) => {
     try {
       // booksChapterUrl: Joi.string(),
-      const imageData = req.payload.imageData;
+      const imageData = req.payload.imageData || req.payload.image;
       const imageFormat = req.payload.imageFormat;
-      
+
       if (!imageData) {
         reject('do not have book data');
         return;
@@ -32,40 +32,6 @@ async function uploadMediaFile(req) {
   });
 };
 
-async function uploadUserAvatar(req) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      // booksChapterUrl: Joi.string(),
-      const imageData = req.payload.image;
-      const imageFormat = req.payload.imageFormat;
-      const appUserId = req.currentUser.appUserId;
-
-      if (!imageData) {
-        reject('do not have book data');
-        return;
-      }
-
-      if (!appUserId) {
-        reject('do not have user id');
-        return;
-      }
-
-      var originaldata = Buffer.from(imageData, 'base64');
-      let newAvatar = await UploadFunctions.uploadMediaFile(originaldata, imageFormat);
-      if (newAvatar) {
-        resolve(newAvatar);
-      } else {
-        reject('failed to upload')
-      }
-      
-    } catch (e) {
-      Logger.error(__filename, e);
-      reject("failed");
-    }
-  });
-};
-
 module.exports = {
-  uploadMediaFile,
-  uploadUserAvatar
+  uploadMediaFile
 };
