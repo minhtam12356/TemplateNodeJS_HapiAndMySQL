@@ -1,0 +1,108 @@
+{
+  "data": [
+    {
+      "CommonPlaceName": "Chợ UwU",
+      "lat": 999,
+      "lng": 999,
+      "AreaCityId": 2,
+      "AreaDistrictId": 3,
+      "AreaWardId": 5
+    },
+    {
+      "CommonPlaceName": "Trường Mầm non QQQQQQQQQQQ",
+      "lat": 999,
+      "lng": 999,
+      "AreaCityId": 2,
+      "AreaDistrictId": 3,
+      "AreaWardId": 5
+    },
+    {
+      "CommonPlaceName": "Trường Tiểu học WWWWWWWWW",
+      "lat": 999,
+      "lng": 999,
+      "AreaCityId": 2,
+      "AreaDistrictId": 3,
+      "AreaWardId": 5
+    },
+    {
+      "CommonPlaceName": "Trường Trung học EEEEEEEE",
+      "lat": 999,
+      "lng": 999,
+      "AreaCityId": 2,
+      "AreaDistrictId": 3,
+      "AreaWardId": 5
+    },
+    {
+      "CommonPlaceName": "Trường Đại học RRRRRRRRR",
+      "lat": 999,
+      "lng": 999,
+      "AreaCityId": 2,
+      "AreaDistrictId": 3,
+      "AreaWardId": 5
+    },
+    {
+      "CommonPlaceName": "Bệnh viện TTTTTTTT",
+      "lat": 999,
+      "lng": 999,
+      "AreaCityId": 2,
+      "AreaDistrictId": 3,
+      "AreaWardId": 5
+    },
+    {
+      "CommonPlaceName": "Tàu Cát Linh",
+      "lat": 999,
+      "lng": 999,
+      "AreaCityId": 2,
+      "AreaDistrictId": 3,
+      "AreaWardId": 5
+    },
+    {
+      "CommonPlaceName": "Sân bay Quốc tế",
+      "lat": 999,
+      "lng": 999,
+      "AreaCityId": 2,
+      "AreaDistrictId": 3,
+      "AreaWardId": 5
+    },
+    {
+      "CommonPlaceName": "Siêu thị YYYYYYYYY",
+      "lat": 999,
+      "lng": 999,
+      "AreaCityId": 2,
+      "AreaDistrictId": 3,
+      "AreaWardId": 5
+    },
+    {
+      "CommonPlaceName": "Trung tâm thương mại UUUUUUUUU",
+      "lat": 999,
+      "lng": 999,
+      "AreaCityId": 2,
+      "AreaDistrictId": 3,
+      "AreaWardId": 5
+    },
+    {
+      "CommonPlaceName": "Công viên IIIIIIII",
+      "lat": 999,
+      "lng": 999,
+      "AreaCityId": 2,
+      "AreaDistrictId": 3,
+      "AreaWardId": 5
+    },
+    {
+      "CommonPlaceName": "Quán cafe OOOOOO",
+      "lat": 999,
+      "lng": 999,
+      "AreaCityId": 2,
+      "AreaDistrictId": 3,
+      "AreaWardId": 5
+    },
+    {
+      "CommonPlaceName": "Nhà hàng PPPPPPPP",
+      "lat": 999,
+      "lng": 999,
+      "AreaCityId": 2,
+      "AreaDistrictId": 3,
+      "AreaWardId": 5
+    }
+  ]
+}
