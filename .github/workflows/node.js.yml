@@ -6,8 +6,6 @@ name: Node.js CI
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
 jobs:
   build:
@@ -16,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [10.x, 12.x]
+        node-version: [12.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
@@ -27,3 +25,21 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - run: npm install
     - run: npm run test
+    - name: Notify slack success
+      if: success()
+      env:
+        SLACK_BOT_TOKEN: ${{ SLACKTOKEN }}
+      uses: voxmedia/github-action-slack-notify-build@v1
+      with:
+        channel: team_backend_bds_project
+        status: TEST SUCCESS for commit name `${{ github.event.head_commit.message }}` from `${{ github.event.head_commit.author.name }}`
+        color: good
+    - name: Notify slack fail
+      if: failure()
+      env:
+        SLACK_BOT_TOKEN: ${{ SLACKTOKEN }}
+      uses: voxmedia/github-action-slack-notify-build@v1
+      with:
+        channel: team_backend_bds_project
+        status: TEST FAILED for commit name - `${{ github.event.head_commit.message }}` from `${{ github.event.head_commit.author.name }}`
+        color: danger
