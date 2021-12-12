@@ -57,15 +57,14 @@ async function sendEmail(receiver, subject, body, html, emailClient) {
       if (err) {
         console.error("Send email error: " + err);
         console.error(info);
-        reject(undefined);
+        resolve(undefined);
       }
       if (info && info.messageId) {
         resolve(info.messageId);
       } else {
-        reject(undefined);
+        resolve(undefined);
       }
     });
-
   });
 }
 
