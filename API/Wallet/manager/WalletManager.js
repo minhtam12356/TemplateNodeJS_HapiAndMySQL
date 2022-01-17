@@ -3,7 +3,7 @@
  */
 "use strict";
 const WalletResourceAccess = require("../resourceAccess/WalletResourceAccess");
-
+const WalletFunction = require('../WalletFunctions');
 async function insert(req) {
   return new Promise(async (resolve, reject) => {
     try {

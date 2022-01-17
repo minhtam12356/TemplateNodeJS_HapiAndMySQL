@@ -22,10 +22,10 @@ async function loginStaff() {
   });
 }
 
-async function loginUser() {
+async function loginUser(username = "string", password = "string") {
   const body = {
-    "username": "tramdevadmin",
-    "password": "123456789",
+    "username": username,
+    "password": password,
   };
   return new Promise((resolve, reject) => {
     chai

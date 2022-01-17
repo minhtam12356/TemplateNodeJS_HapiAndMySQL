@@ -24,6 +24,7 @@ async function createTable() {
           table.string('phoneNumber');
           table.string('lastActiveAt');
           table.string('twoFACode');
+          table.string('telegramId');
           table.string('facebookId');
           table.string('appleId');
           timestamps(table);
@@ -43,23 +44,6 @@ async function createTable() {
         })
         .then(() => {
           Logger.info(`${tableName}`, `${tableName} table created done`);
-          let initUser = [{
-            "lastName": "string",
-            "firstName": "string",
-            "username": "string",
-            "email": "string@string.com",
-            "password": "string",
-            "phoneNumber": "string",
-            "AreaCountry": "1",
-            "AreaProvince": "1;2;4",
-            "AreaDistrict": "1;2;3;4;5",
-            "AreaWard": "1;2;3;5",
-            "roleId": 1
-          }]
-          DB(`${tableName}`).insert(initUser).then((result) => {
-            Logger.info(`${tableName}`, `init ${tableName}` + result);
-            resolve();
-          });
           resolve();
         });
     });

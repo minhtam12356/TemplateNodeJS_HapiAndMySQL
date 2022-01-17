@@ -1,27 +1,27 @@
 /**
  * Created by A on 7/18/17.
  */
-'use strict';
+"use strict";
 
-const WalletResource = require('./resourceAccess/WalletResourceAccess');
-const WALLET_TYPE = require('./WalletConstant').WALLET_TYPE;
+const WalletResource = require("./resourceAccess/WalletResourceAccess");
+const WALLET_TYPE = require("./WalletConstant").WALLET_TYPE;
+const SystemConfigFunction = require("../SystemConfiguration/SystemConfigurationFunction");
 
 async function createWalletForUser(userId) {
-  let newWalletData = 
-  [
+  let newWalletData = [
     {
       appUserId: userId,
-      walletType: WALLET_TYPE.POINT //vi diem
+      walletType: WALLET_TYPE.POINT, //vi diem
     },
     {
       appUserId: userId,
-      walletType: WALLET_TYPE.REWARD //vi diem khuyen mai
+      walletType: WALLET_TYPE.REWARD, //vi diem khuyen mai
     },
-  ]
+  ];
   let createdResult = await WalletResource.insert(newWalletData);
   return createdResult;
 }
 
 module.exports = {
   createWalletForUser
-}
+};

@@ -27,7 +27,4 @@ $ npm install
 $ npm start
 ```
 
-setup git rebase
-them 1 history nua
-
 ## Try http://localhost:5001/documentation

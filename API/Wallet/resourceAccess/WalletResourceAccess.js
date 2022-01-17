@@ -16,7 +16,8 @@ async function createTable() {
           table.integer('appUserId');
           table.string('walletType').defaultTo(WALLET_TYPE.POINT);
           table.float('balance', 48, 24).defaultTo(0);
-          table.string('balanceUnit').defaultTo(BALANCE_UNIT.VND);
+          table.string('balanceUnit').defaultTo(BALANCE_UNIT.USD);
+          table.integer('walletBalanceUnitId').defaultTo(0);
           table.string('lastDepositAt');
           table.string('walletAddress'); //use for crypto wallet
           table.string('walletPrivatekey'); //use for crypto wallet
@@ -26,7 +27,7 @@ async function createTable() {
           table.index('appUserId');
           table.index('walletType');
           table.index('balance');
-          table.index('balanceUnit');
+          table.index('walletBalanceUnitId');
           table.index('lastDepositAt');
           table.index('walletAddress');
           table.index('walletPrivatekey');
@@ -63,7 +64,7 @@ async function count(filter, order) {
 }
 
 async function incrementBalance(id, amount) {
-  return await DB(tableName).where(primaryKeyField, '=', id).increment('balance', amount);
+  return await Common.incrementFloat(tableName, primaryKeyField, id, 'balance', amount);
 }
 
 async function updateBalanceTransaction(walletsDataList) {
@@ -83,6 +84,17 @@ async function updateBalanceTransaction(walletsDataList) {
     return undefined;
   }
 }
+
+async function findById(id) {
+  let dataId = {};
+  dataId[primaryKeyField] = id;
+  return await Common.findById(tableName, dataId, id);
+}
+
+async function decrementBalance(id, amount) {
+  return await Common.decrementFloat(tableName, primaryKeyField, id, 'balance', amount);
+}
+
 module.exports = {
   insert,
   find,
@@ -90,5 +102,7 @@ module.exports = {
   updateById,
   initDB,
   updateBalanceTransaction,
-  incrementBalance
+  incrementBalance,
+  findById,
+  decrementBalance
 };

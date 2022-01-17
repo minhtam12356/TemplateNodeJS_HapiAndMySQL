@@ -21,6 +21,7 @@ async function createView() {
     `${UserTableName}.facebookId`,
     `${UserTableName}.appleId`,
     `${UserTableName}.username`,
+
     `${rootTableName}.paymentDepositTransactionId`,
     `${rootTableName}.paymentMethodId`,
     `${rootTableName}.paymentAmount`,
@@ -32,6 +33,7 @@ async function createView() {
     `${rootTableName}.paymentApproveDate`,
     `${rootTableName}.paymentPICId`,
     `${rootTableName}.createdAt`,
+    DB.raw(`DATE_FORMAT(${rootTableName}.createdAt, "%d-%m-%Y") as createdDate`),
     `${rootTableName}.updatedAt`,
     `${rootTableName}.isHidden`,
     `${rootTableName}.isDeleted`,
@@ -70,6 +72,9 @@ async function sum(field, filter, order) {
   return await Common.sum(tableName, field, filter, order);
 }
 
+async function sumAmountDistinctByDate(filter, startDate, endDate) {
+  return await Common.sumAmountDistinctByDate(tableName, 'paymentAmount', filter, startDate, endDate);
+}
 
 function _makeQueryBuilderByFilter(filter, skip, limit, startDate, endDate, order) {
   let queryBuilder = DB(tableName);
@@ -142,5 +147,6 @@ module.exports = {
   sum,
   modelName: tableName,
   customSearch,
-  customCount
+  customCount,
+  sumAmountDistinctByDate
 };

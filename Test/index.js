@@ -1,3 +1,12 @@
-require('../API/AppUsers/test/AppUsers.spec');
-// require('../API/Upload/test/Upload.spec');
+// require('../API/AppUsers/test/AppUsers.spec');
+// require('../API/Staff/test/Staff.spec');
+// require('../API/WalletBalanceUnit/test');
+// require('../API/PaymentMethod/test/PaymentMethod.spec');
 // require('../API/CustomerMessage/test/CustomerMessage.spec');
+// require('../API/PaymentServicePackage/test');
+// require('../API/PaymentDepositTransaction/test');
+// require('../API/PaymentWithdrawTransaction/test');
+// require('../API/PaymentExchangeTransaction/test');
+// require('../API/PaymentMethod/test');
+// require('../API/SystemConfiguration/test');
+// require('../API/BetRecords/test');

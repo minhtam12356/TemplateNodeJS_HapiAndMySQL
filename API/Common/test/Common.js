@@ -4,6 +4,7 @@ const jsonComparer = require('deep-diff');
 const { readFile } = require('fs');
 
 function checkResponseStatus(res, expected) {
+  expect(res).to.not.equal(undefined);
   if (res.body && res.body.statusCode !== expected) {
     console.log('========Request=======');
     console.log(res.request.url);
@@ -13,7 +14,7 @@ function checkResponseStatus(res, expected) {
     console.log('========Response======');
     console.log(res.body);
   }
-  expect(res).to.have.status(200);
+  expect(res).to.have.status(expected);
   expect(res.body.statusCode === expected);
 }
 

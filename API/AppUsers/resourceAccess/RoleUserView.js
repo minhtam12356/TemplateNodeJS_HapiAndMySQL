@@ -132,7 +132,7 @@ async function customCount(filter, searchText, order) {
     try {
       query.count(`${primaryKeyField} as count`)
         .then(records => {
-          resolve(records[0].count);
+          resolve(records);
         });
     } catch (e) {
       Logger.error("ResourceAccess", `DB COUNT ERROR: ${tableName} : ${JSON.stringify(filter)} - ${JSON.stringify(order)}`);

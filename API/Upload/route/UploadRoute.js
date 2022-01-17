@@ -38,4 +38,24 @@ module.exports = {
       Response(req, res, "uploadMediaFile");
     },
   },
+  uploadUserAvatar: {
+    tags: ["api", `${moduleName}`],
+    description: `${moduleName} upload media`,
+    pre: [{ method: CommonFunctions.verifyToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        image: Joi.binary().encoding('base64'),
+        imageFormat: Joi.string().default('png')
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "uploadUserAvatar");
+    },
+  },
 };

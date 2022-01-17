@@ -9,26 +9,39 @@ const Response = require("../../Common/route/response").setup(Manager);
 const CommonFunctions = require('../../Common/CommonFunctions');
 const AppUsersFunctions = require('../AppUsersFunctions');
 const SystemStatus = require('../../Maintain/MaintainFunctions').systemStatus;
-
+const { USER_SEX, USER_TYPE } = require('../AppUserConstant');
 const insertSchema = {
   lastName: Joi.string(),
   firstName: Joi.string(),
   username: Joi.string().alphanum().min(6).max(30).required(),
-  email: Joi.string().email().required(),
-  password: Joi.string().required(),
-  phoneNumber: Joi.string().required(),
+  email: Joi.string().email(),
+  referUser: Joi.string().allow(''),
+  password: Joi.string().required().min(6),
+  secondaryPassword: Joi.string().min(6),
+  phoneNumber: Joi.string(),
+  birthDay: Joi.string(),
+  identityNumber: Joi.string(),
+  sex: Joi.number().min(USER_SEX.MALE).max(USER_SEX.FEMALE),
 };
-
 const updateSchema = {
   lastName: Joi.string(),
   firstName: Joi.string(),
   phoneNumber: Joi.string(),
+  birthDay: Joi.string(),
   active: Joi.number().min(0).max(1),
+  limitWithdrawDaily: Joi.number().min(0).max(1000000000),
+  memberLevelName: Joi.string(),
   twoFACode: Joi.string(),
   twoFAEnable: Joi.number().min(0).max(1),
   userAvatar: Joi.string().allow(''),
+  identityNumber: Joi.string(),
+  sex: Joi.number().min(USER_SEX.MALE).max(USER_SEX.FEMALE),
+  firebaseToken: Joi.string(),
   telegramId: Joi.string(),
   isDeleted: Joi.number(),
+  sotaikhoan: Joi.string(),
+  tentaikhoan: Joi.string(),
+  tennganhang: Joi.string(),
 }
 
 const filterSchema = {
@@ -36,6 +49,13 @@ const filterSchema = {
   username: Joi.string().alphanum(),
   email: Joi.string().email(),
   phoneNumber: Joi.string(),
+  referUser: Joi.string(),
+  name: Joi.string(),
+  userType: Joi.number().min(1).max(2),
+  isVerified: Joi.number().min(-1).max(2),
+  isVerifiedEmail: Joi.number().min(-1).max(2),
+  isVerifiedPhoneNumber: Joi.number().min(-1).max(2),
+  memberLevelName: Joi.string(),
 };
 
 module.exports = {
@@ -52,7 +72,7 @@ module.exports = {
   updateById: {
     tags: ["api", `${moduleName}`],
     description: `update ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }],
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -71,8 +91,8 @@ module.exports = {
   },
   find: {
     tags: ["api", `${moduleName}`],
-    description: `update ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }],
+    description: `get list ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -102,7 +122,7 @@ module.exports = {
   findById: {
     tags: ["api", `${moduleName}`],
     description: `find by id ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }],
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -133,6 +153,23 @@ module.exports = {
         return;
       }
       Response(req, res, "loginUser");
+    }
+  },
+  loginByPhone: {
+    tags: ["api", `${moduleName}`],
+    description: `login ${moduleName}`,
+    validate: {
+      payload: Joi.object({
+        phoneNumber: Joi.string().alphanum().min(6).max(30).required(),
+        password: Joi.string().required(),
+      })
+    },
+    handler: function (req, res) {
+      if(SystemStatus.all === false){
+        res("maintain").code(500);
+        return;
+      }
+      Response(req, res, "loginByPhone");
     }
   },
   loginFacebook: {
@@ -227,12 +264,13 @@ module.exports = {
       Response(req, res, "registerUser");
     }
   },
-  resetPasswordUser: {
+  registerUserByPhone: {
     tags: ["api", `${moduleName}`],
-    description: `reset password ${moduleName}`,
+    description: `register ${moduleName}`,
     validate: {
       payload: Joi.object({
-        username: Joi.string().required(),
+        password: Joi.string().required().min(6),
+        phoneNumber: Joi.string().required(),
       })
     },
     handler: function (req, res) {
@@ -240,13 +278,68 @@ module.exports = {
         res("maintain").code(500);
         return;
       }
-      Response(req, res, "resetPasswordUser");
+      Response(req, res, "registerUserByPhone");
     }
   },
+  forgotPassword: {
+    tags: ["api", `${moduleName}`],
+    description: `user forgot ${moduleName}`,
+    validate: {
+      payload: Joi.object({
+        email: Joi.string().email().required(),
+      })
+    },
+    handler: function (req, res) {
+      if(SystemStatus.all === false){
+        res("maintain").code(500);
+        return;
+      }
+      Response(req, res, "forgotPassword");
+    }
+  },
+  forgotPasswordOTP: {
+    tags: ["api", `${moduleName}`],
+    description: `user forgot ${moduleName}`,
+    validate: {
+      payload: Joi.object({
+        phoneNumber: Joi.string().required(),
+        password: Joi.string().required().min(6),
+      })
+    },
+    handler: function (req, res) {
+      if(SystemStatus.all === false){
+        res("maintain").code(500);
+        return;
+      }
+      Response(req, res, "forgotPasswordOTP");
+    }
+  },
+  verifyEmailUser: {
+    tags: ["api", `${moduleName}`],
+    description: `${moduleName} verify email`,
+    pre: [{ method: CommonFunctions.verifyToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({})
+    },
+    handler: function (req, res) {
+      if(SystemStatus.all === false){
+        res("maintain").code(500);
+        return;
+      }
+      Response(req, res, "verifyEmailUser");
+    }
+  },
+  
   changePasswordUser: {
     tags: ["api", `${moduleName}`],
     description: `change password ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }],
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyOwnerToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -257,7 +350,7 @@ module.exports = {
       payload: Joi.object({
         username: Joi.string().required(),
         password: Joi.string().required(),
-        newPassword: Joi.string().required(),
+        newPassword: Joi.string().required().min(6),
       })
     },
     handler: function (req, res) {
@@ -286,12 +379,12 @@ module.exports = {
     description: `get QrCode for 2FA ${moduleName}`,
     validate: {
       query: {
-        id: Joi.number(),
+        appUserId: Joi.number(),
       }
     },
     handler: function (req, res) {
-      if(req.query.id){
-        AppUsersFunctions.generate2FACode(req.query.id).then((qrCode) => {
+      if(req.query.appUserId){
+        AppUsersFunctions.generate2FACode(req.query.appUserId).then((qrCode) => {
           if(qrCode){
             res.file(qrCode);
           }else{
@@ -303,33 +396,10 @@ module.exports = {
       }
     }
   },
-  registerStationUser: {
+  userUpdateInfo: {
     tags: ["api", `${moduleName}`],
-    description: `register ${moduleName}`,
-    validate: {
-      payload: Joi.object({
-        lastName: Joi.string(),
-        firstName: Joi.string(),
-        username: Joi.string().alphanum().min(6).max(30).required(),
-        email: Joi.string().email().required(),
-        password: Joi.string().required(),
-        phoneNumber: Joi.string().required(),
-        stationsId: Joi.number().required().min(0),
-        appUserRoleId: Joi.number()
-      })
-    },
-    handler: function (req, res) {
-      if(SystemStatus.all === false){
-        res("maintain").code(500);
-        return;
-      }
-      Response(req, res, "registerStationUser");
-    }
-  },
-  stationUserList: {
-    tags: ["api", `${moduleName}`],
-    description: `update ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }],
+    description: `${moduleName} update info`,
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyOwnerToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -338,27 +408,17 @@ module.exports = {
         authorization: Joi.string(),
       }).unknown(),
       payload: Joi.object({
-        filter: Joi.object(filterSchema),
-        skip: Joi.number().default(0).min(0),
-        limit: Joi.number().default(20).max(100),
-        searchText: Joi.string(),
-        order: Joi.object({
-          key: Joi.string()
-            .default("createdAt")
-            .allow(""),
-          value: Joi.string()
-            .default("desc")
-            .allow("")
-        })
+        id: Joi.number().required(),
+        data: Joi.object(updateSchema)
       })
     },
     handler: function (req, res) {
-      Response(req, res, "stationUserList");
+      Response(req, res, "userUpdateInfo");
     }
   },
-  stationUserDetail: {
+  userGetDetailById: {
     tags: ["api", `${moduleName}`],
-    description: `find by id ${moduleName}`,
+    description: `update ${moduleName} by id`,
     pre: [{ method: CommonFunctions.verifyToken }],
     auth: {
       strategy: 'jwt',
@@ -372,13 +432,13 @@ module.exports = {
       })
     },
     handler: function (req, res) {
-      Response(req, res, "stationUserDetail");
+      Response(req, res, "userGetDetailById");
     }
   },
-  updateStationUserById: {
+  verifyInfoUser: {
     tags: ["api", `${moduleName}`],
-    description: `update ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }],
+    description: `Verify info ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -388,19 +448,289 @@ module.exports = {
       }).unknown(),
       payload: Joi.object({
         id: Joi.number().min(0),
-        data: Joi.object({
-          lastName: Joi.string(),
-          firstName: Joi.string(),
-          phoneNumber: Joi.string(),
-          active: Joi.number().min(0).max(1),
-          email: Joi.string(),
-          isDeleted: Joi.number(),
-          appUserRoleId: Joi.number()
-        }),
       })
     },
     handler: function (req, res) {
-      Response(req, res, "updateStationUserById");
+      Response(req, res, "verifyInfoUser");
+    }
+  },
+
+  rejectInfoUser: {
+    tags: ["api", `${moduleName}`],
+    description: `reject info ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        id: Joi.number().min(0),
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "rejectInfoUser");
+    }
+  },
+  getUsersByMonth: {
+    tags: ["api", `${moduleName}`],
+    description: `Get ${moduleName}s by month` ,
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        month: Joi.number().min(1).max(12).required(),
+        year: Joi.number().required(),
+        skip: Joi.number().default(0).min(0),
+        limit: Joi.number().default(20).max(100),
+        order: Joi.object({
+          key: Joi.string()
+            .default("createdAt")
+            .allow(""),
+          value: Joi.string()
+            .default("desc")
+            .allow("")
+        })
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "getUsersByMonth");
+    }
+  },
+
+  uploadIdentityCardBefore: {
+    tags: ["api", `${moduleName}`],
+    description: `upload identity card images for ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken}, { method: CommonFunctions.verifyOwnerToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        id: Joi.number().required().min(0),
+        imageData: Joi.binary().encoding('base64'),
+        imageFormat: Joi.string().default('png')
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "uploadBeforeIdentityCard");
+    },
+  },
+
+  uploadIdentityCardAfter: {
+    tags: ["api", `${moduleName}`],
+    description: `upload identity card images for ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken}, { method: CommonFunctions.verifyOwnerToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        id: Joi.number().required().min(0),
+        imageData: Joi.binary().encoding('base64'),
+        imageFormat: Joi.string().default('png')
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "uploadAfterIdentityCard");
+    },
+  },
+
+  submitIdentityCardImage: {
+    tags: ["api", `${moduleName}`],
+    description: `submit images of identity card of ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyOwnerToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        id: Joi.number().min(0),
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "submitIdentityCardImage");
+    }
+  },
+  uploadAvatar: {
+    tags: ["api", `${moduleName}`],
+    description: `upload avatar images for ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken}, { method: CommonFunctions.verifyOwnerToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+          authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        id: Joi.number().required().min(0),
+        imageData: Joi.binary().encoding('base64'),
+        imageFormat: Joi.string().default('png')
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "uploadAvatar");
+    },
+  },
+
+  exportExcelFile: {
+    tags: ["api", `${moduleName}`],
+    description: `get list ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        filter: Joi.object(filterSchema),
+        order: Joi.object({
+          key: Joi.string()
+            .default("createdAt")
+            .allow(""),
+          value: Joi.string()
+            .default("desc")
+            .allow("")
+        })
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "exportExcel");
+    }
+  },
+
+  resetPasswordBaseOnToken: {
+    tags: ["api", `${moduleName}`],
+    description: `change password ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        password: Joi.string().required().min(6),
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "resetPasswordBaseOnUserToken");
+    }
+  },
+
+  adminResetPasswordUser: {
+    tags: ["api", `${moduleName}`],
+    description: `user forgot ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        id: Joi.number().min(1).required(),
+      })
+    },
+    handler: function (req, res) {
+      if(SystemStatus.all === false){
+        res("maintain").code(500);
+        return;
+      }
+      Response(req, res, "adminResetPassword");
+    }
+  },
+
+  sendMailToVerify: {
+    tags: ["api", `${moduleName}`],
+    description: `${moduleName} verify email`,
+    pre: [{ method: CommonFunctions.verifyToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        email: Joi.string().required().email(),
+      })
+    },
+    handler: function (req, res) {
+      if(SystemStatus.all === false){
+        res("maintain").code(500);
+        return;
+      }
+      Response(req, res, "sendMailToVerifyEmail");
+    }
+  },
+  adminChangePasswordUser: {
+    tags: ["api", `${moduleName}`],
+    description: `${moduleName} adminChangePasswordUser`,
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        id: Joi.number().min(1).required(),
+        password: Joi.string().required().min(6),
+      })
+    },
+    handler: function (req, res) {
+      if(SystemStatus.all === false){
+        res("maintain").code(500);
+        return;
+      }
+      Response(req, res, "adminChangePasswordUser");
+    }
+  },
+  adminChangeSecondaryPasswordUser: {
+    tags: ["api", `${moduleName}`],
+    description: `${moduleName} adminChangeSecondaryPasswordUser`,
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        id: Joi.number().min(1).required(),
+        password: Joi.string().required().min(6),
+      })
+    },
+    handler: function (req, res) {
+      if(SystemStatus.all === false){
+        res("maintain").code(500);
+        return;
+      }
+      Response(req, res, "adminChangeSecondaryPasswordUser");
     }
   },
 };

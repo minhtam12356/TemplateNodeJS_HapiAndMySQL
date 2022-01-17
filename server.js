@@ -9,7 +9,6 @@ const Routes    = require('./config/routes');
 const Manifest  = require('./config/manifest');
 const AppConfig = require('./config/app');
 
-const MQTTBroker = require('./ThirdParty/MQTTBroker/MQTTBroker');
 const CronJob   = require('./cron/index');
 
 Glue.compose(Manifest, {relativeTo: __dirname}, (err, server) => {
@@ -18,7 +17,10 @@ Glue.compose(Manifest, {relativeTo: __dirname}, (err, server) => {
     }
     server.start(() => {
         Logger.info('Server running at:', server.info.uri);
-        CronJob.startSchedule();
+        if (process.env.NODE_ENV !== 'dev') {
+          CronJob.startSchedule();
+        }
+        
     });
     server.auth.strategy('jwt', 'jwt', {
         key: AppConfig.jwt.secret,

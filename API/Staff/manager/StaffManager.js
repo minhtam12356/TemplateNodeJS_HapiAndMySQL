@@ -17,12 +17,6 @@ async function insert(req) {
         return;
       }
 
-      const NOT_VALID = false;
-      if(StaffFunctions.isValidRole(staffData.roleId) === NOT_VALID){
-        reject("invalid role");
-        return;
-      }
-
       //hash password
       staffData.password = StaffFunctions.hashPassword(staffData.password);
 
@@ -32,7 +26,7 @@ async function insert(req) {
         reject("can not insert staff");
         return;
       } else {
-        resolve("success");
+        resolve(addResult);
       }
       return;
     } catch (e) {
@@ -69,12 +63,6 @@ async function updateById(req) {
     try {
       let staffData = req.payload.data;
       let staffId = req.payload.id;
-
-      const NOT_VALID = false;
-      if(staffData.roleId && StaffFunctions.isValidRole(staffData.roleId) === NOT_VALID){
-        reject("invalid role");
-        return;
-      }
 
       let updateResult = await StaffResourceAccess.updateById(staffId, staffData);
 

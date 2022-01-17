@@ -22,7 +22,7 @@ const updateSchema = {
 
 const filterSchema = {
   appUserId: Joi.number(),
-  userName: Joi.string(),
+  username: Joi.string(),
   walletId: Joi.number(),
   referId: Joi.number(),
   firstName: Joi.string(),
@@ -137,7 +137,8 @@ module.exports = {
       }).unknown(),
       payload: Joi.object({
         filter: Joi.object({
-          paymentStatus: Joi.string().allow([DEPOSIT_TRX_STATUS.NEW, DEPOSIT_TRX_STATUS.COMPLETED, DEPOSIT_TRX_STATUS.CANCELED])
+          paymentStatus: Joi.string().allow([DEPOSIT_TRX_STATUS.NEW, DEPOSIT_TRX_STATUS.COMPLETED, DEPOSIT_TRX_STATUS.CANCELED]),
+          paymentMethodId: Joi.number().min(0),
         }),
         skip: Joi.number().default(0).min(0),
         limit: Joi.number().default(20).max(100),
@@ -157,9 +158,9 @@ module.exports = {
       Response(req, res, "depositHistory");
     }
   },
-  depositByUser: {
+  userRequestDeposit: {
     tags: ["api", `${moduleName}`],
-    description: `depositByUser ${moduleName}`,
+    description: `userRequestDeposit ${moduleName}`,
     pre: [{ method: CommonFunctions.verifyToken }],
     auth: {
       strategy: 'jwt',
@@ -173,7 +174,7 @@ module.exports = {
       })
     },
     handler: function (req, res) {
-      Response(req, res, "insert");
+      Response(req, res, "userRequestDeposit");
     }
   },
   approveDepositTransaction: {
@@ -189,6 +190,7 @@ module.exports = {
       }).unknown(),
       payload: Joi.object({
         id: Joi.number().min(0),
+        paymentNote: Joi.string(),
       })
     },
     handler: function (req, res) {
@@ -208,6 +210,7 @@ module.exports = {
       }).unknown(),
       payload: Joi.object({
         id: Joi.number().min(0),
+        paymentNote: Joi.string(),
       })
     },
     handler: function (req, res) {
@@ -275,7 +278,7 @@ module.exports = {
       Response(req, res, "deleteById");
     }
   },
-  addRewardPointForUser: {
+  addPointForUser: {
     tags: ["api", `${moduleName}`],
     description: `${moduleName} - add reward point for user`,
     pre: [{ method: CommonFunctions.verifyToken },{ method: CommonFunctions.verifyStaffToken } ],
@@ -287,12 +290,52 @@ module.exports = {
         authorization: Joi.string(),
       }).unknown(),
       payload: Joi.object({
-        id: Joi.number().min(0),
-        amount: Joi.number().min(0)
+        id: Joi.number().required().min(0),
+        amount: Joi.number().required(),
+        paymentNote: Joi.string(),
       })
     },
     handler: function (req, res) {
-      Response(req, res, "addRewardPointForUser");
+      Response(req, res, "addPointForUser");
+    }
+  },
+  exportExcelHistory: {
+    tags: ["api", `${moduleName}`],
+    description: `${moduleName} - export excel history reward point for user`,
+    pre: [{ method: CommonFunctions.verifyToken },{ method: CommonFunctions.verifyStaffToken } ],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        id: Joi.number().min(0)
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "exportHistoryOfUser");
+    }
+  },
+  exportSalesToExcel: {
+    tags: ["api", `${moduleName}`],
+    description: `${moduleName} - export excel sales`,
+    // pre: [{ method: CommonFunctions.verifyToken },{ method: CommonFunctions.verifyStaffToken } ],
+    // auth: {
+    //   strategy: 'jwt',
+    // },
+    validate: {
+      // headers: Joi.object({
+      //   authorization: Joi.string(),
+      // }).unknown(),
+      payload: Joi.object({
+        startDate: Joi.string().required(),
+        endDate: Joi.string().required(),
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "exportSalesToExcel");
     }
   },
 };

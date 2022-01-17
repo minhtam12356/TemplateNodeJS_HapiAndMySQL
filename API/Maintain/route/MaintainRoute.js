@@ -16,7 +16,14 @@ module.exports = {
   getSystemStatus: {
     tags: ["api", `${moduleName}`],
     description: `${moduleName} getSystemStatus`,
+    pre: [{ method: CommonFunctions.verifyToken }],
+    auth: {
+      strategy: 'jwt',
+    },
     validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
       payload: Joi.object()
     },
     handler: function (req, res) {

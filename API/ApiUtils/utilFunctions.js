@@ -54,10 +54,10 @@ async function chunkArray(arrData, chunkSize) {
   }
   return arrayResult;
 }
-function FormatDate(date) {
+function FormatDate(date,resultFormat) {
   var newDate = moment(date, "YYYY-MM-DD");
-  var newDateFormat = newDate.format("MM");
-  return newDateFormat
+  var newDateFormat = newDate.format(`${resultFormat}`);
+  return newDateFormat 
 }
 
 module.exports = {

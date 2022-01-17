@@ -10,18 +10,16 @@ chai.should();
 chai.use(chaiHttp);
 chai.use(chaiHttp);
 
-const Model = require("../resourceAccess/PaymentServicePackageResourceAccess");
-
 const app = require("../../../server");
 
-describe(`Tests ${Model.modelName}`, () => {
-  let token = "";
+describe(`Tests PaymentServicePackage`, () => {
+  let staffToken = "";
   let userToken = "";
   let id;
   before((done) => {
     new Promise(async (resolve, reject) => {
       let staffData = await TestFunctions.loginStaff();
-      token = staffData.token;
+      staffToken = staffData.token;
       let userData = await TestFunctions.loginUser();
       userToken = userData.token;
       resolve();
@@ -29,16 +27,30 @@ describe(`Tests ${Model.modelName}`, () => {
   });
 
   it("insert payment service package", (done) => {
+    let price = faker.random.number({
+      min: 100000,
+      max: 500000,
+    });
+    let discountPrice = price - price * faker.random.number(20) / 100;
     const body = {
-      paymentPackageName: faker.random.words(),
-      rechargePackage: faker.random.number(10),
-      promotion: faker.random.number(10),
-      status: Constant.PACKAGE_STATUS.NEW,
+      packageName: faker.random.words(),
+      packagePrice: price,
+      packageDiscountPrice: discountPrice + "",
+      packagePerformance: faker.random.number({
+        min: 1,
+        max: 10
+      }),
+      packageUnitId: 1,
+      packageStatus: Constant.PACKAGE_STATUS.NEW,
+      packageDuration: faker.random.number({
+        min: 1,
+        max: 20
+      })
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
       .post(`/PaymentServicePackage/insert`)
-      .set("Authorization", `Bearer ${token}`)
+      .set("Authorization", `Bearer ${staffToken}`)
       .send(body)
       .end((err, res) => {
         if (err) {
@@ -55,7 +67,7 @@ describe(`Tests ${Model.modelName}`, () => {
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
       .post(`/PaymentServicePackage/find`)
-      .set("Authorization", `Bearer ${token}`)
+      .set("Authorization", `Bearer ${staffToken}`)
       .send(body)
       .end((err, res) => {
         if (err) {
@@ -70,17 +82,14 @@ describe(`Tests ${Model.modelName}`, () => {
     const body = {
       id: id,
       data: {
-        paymentPackageName: faker.random.words(),
-        rechargePackage: faker.random.number(10),
-        promotion: faker.random.number(10),
-        status: Constant.PACKAGE_STATUS.NORMAL,
+        packageStatus: Constant.PACKAGE_STATUS.HOT,
       },
     };
 
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
       .post(`/PaymentServicePackage/updateById`)
-      .set("Authorization", `Bearer ${token}`)
+      .set("Authorization", `Bearer ${staffToken}`)
       .send(body)
       .end((err, res) => {
         if (err) {
@@ -91,24 +100,6 @@ describe(`Tests ${Model.modelName}`, () => {
       });
   });
 
-  it("delete payment service package", (done) => {
-    const body = {
-      id: id,
-    };
-
-    chai
-      .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/PaymentServicePackage/deleteById`)
-      .set("Authorization", `Bearer ${token}`)
-      .send(body)
-      .end((err, res) => {
-        if (err) {
-          console.error(err);
-        }
-        checkResponseStatus(res, 200);
-        done();
-      });
-  });
   it("get payment service package by id", (done) => {
     const body = {
       id: id,
@@ -116,7 +107,7 @@ describe(`Tests ${Model.modelName}`, () => {
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
       .post(`/PaymentServicePackage/findById`)
-      .set("Authorization", `Bearer ${token}`)
+      .set("Authorization", `Bearer ${staffToken}`)
       .send(body)
       .end((err, res) => {
         if (err) {
@@ -131,8 +122,8 @@ describe(`Tests ${Model.modelName}`, () => {
     const body = {};
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/PaymentServicePackage/getListByUser`)
-      .set("Authorization", `Bearer ${userToken}`)
+      .post(`/PaymentServicePackage/user/getList`)
+      .set("Authorization", `${userToken}`)
       .send(body)
       .end((err, res) => {
         if (err) {
@@ -142,15 +133,30 @@ describe(`Tests ${Model.modelName}`, () => {
         done();
       });
   });
-
-  it("user payment service package by id", (done) => {
+  it("user get payment service package (no token)", (done) => {
+    const body = {};
+    chai
+      .request(`0.0.0.0:${process.env.PORT}`)
+      .post(`/PaymentServicePackage/user/getList`)
+      .set("Authorization", ``)
+      .send(body)
+      .end((err, res) => {
+        if (err) {
+          console.error(err);
+        }
+        checkResponseStatus(res, 200);
+        done();
+      });
+  });
+  it("delete payment service package", (done) => {
     const body = {
       id: id,
     };
+
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/PaymentServicePackage/userGetPaymentPackageById`)
-      .set("Authorization", `Bearer ${userToken}`)
+      .post(`/PaymentServicePackage/deleteById`)
+      .set("Authorization", `Bearer ${staffToken}`)
       .send(body)
       .end((err, res) => {
         if (err) {

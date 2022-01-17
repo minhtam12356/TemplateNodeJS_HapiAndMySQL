@@ -7,6 +7,10 @@ const UserWallet = require('../Wallet/resourceAccess/WalletResourceAccess');
 
 const DEPOSIT_TRX_STATUS = require('./PaymentDepositTransactionConstant').DEPOSIT_TRX_STATUS;
 const WALLET_TYPE = require('../Wallet/WalletConstant').WALLET_TYPE;
+// const { APPROVED_PAYMENT, MESSAGE_TYPE, REFUSED_PAYMENT, REWARD_POINT } = require('../CustomerMessage/CustomerMessageConstant');
+// const Handlebars = require('handlebars');
+const moment = require('moment');
+// const { handleSendMessage } = require('../Common/CommonFunctions');
 
 async function createDepositTransaction(user, amount) {
   let wallet = await UserWallet.find({
@@ -35,7 +39,7 @@ async function createDepositTransaction(user, amount) {
   }
 }
 
-async function approveDepositTransaction(transactionId, staff) {
+async function approveDepositTransaction(transactionId, staff, paymentNote) {
   //get info of transaction
   let transaction = await DepositTransactionAccess.find({
     paymentDepositTransactionId: transactionId
@@ -70,6 +74,10 @@ async function approveDepositTransaction(transactionId, staff) {
     transaction.paymentPICId = staff.staffId;
   }
 
+  if (paymentNote) {
+    transaction.paymentNote = paymentNote;
+  }
+  
   transaction.paymentApproveDate = new Date();
 
   delete transaction.paymentDepositTransactionId;
@@ -78,8 +86,19 @@ async function approveDepositTransaction(transactionId, staff) {
   let updateTransactionResult = await DepositTransactionAccess.updateById(transactionId, transaction);
   if (updateTransactionResult) {
     //Update wallet balance in DB
-    let updateWalletResult = UserWallet.incrementBalance(pointWallet.walletId, transaction.paymentAmount);
+    let updateWalletResult = await UserWallet.incrementBalance(pointWallet.walletId, transaction.paymentAmount);
     if (updateWalletResult) {
+      // //send message
+      // const template = Handlebars.compile(JSON.stringify(APPROVED_PAYMENT));
+      // const data = {
+      //   "paymentId": transactionId,
+      //   "promotionMoney": transaction.paymentRewardAmount,
+      //   "totalMoney": parseFloat(pointWallet.balance) + parseFloat(transaction.paymentRewardAmount)
+      // };
+      // const message = JSON.parse(template(data));
+      // await handleSendMessage(transaction.appUserId, message, {
+      //   paymentDepositTransactionId: transactionId
+      // }, MESSAGE_TYPE.USER);
       return updateWalletResult;
     } else {
       console.error(`updateWalletResult error pointWallet.walletId ${pointWallet.walletId} - ${JSON.stringify(transaction)}`);
@@ -91,7 +110,7 @@ async function approveDepositTransaction(transactionId, staff) {
   }
 }
 
-async function denyDepositTransaction(transactionId, staff) {
+async function denyDepositTransaction(transactionId, staff, paymentNote) {
   //get info of transaction
   let transaction = await DepositTransactionAccess.find({
     paymentDepositTransactionId: transactionId
@@ -112,15 +131,26 @@ async function denyDepositTransaction(transactionId, staff) {
   //Change payment status and store info of PIC
   let updatedData = {
     paymentStatus: DEPOSIT_TRX_STATUS.CANCELED,
-    paymentApproveDate: new Date(),
-    paymentNote: `Hệ thống tự động từ chối nạp tiền`,
+    paymentApproveDate: new Date()
   }
 
   //if transaction was performed by Staff, then store staff Id for later check
   if (staff) {
     updatedData.paymentPICId = staff.staffId;
-    updatedData.paymentNote = `${staff.firstName} ${staff.lastName} (id: ${staff.staffId}) từ chối nạp tiền`;
   }
+
+  if (paymentNote) {
+    updatedData.paymentNote = paymentNote;
+  }
+  // //send message
+  // const template = Handlebars.compile(JSON.stringify(REFUSED_PAYMENT));
+  // const data = {
+  //   "paymentId": transactionId
+  // };
+  // const message = JSON.parse(template(data));
+  // await handleSendMessage(transaction.appUserId, message, {
+  //   paymentDepositTransactionId: transactionId
+  // }, MESSAGE_TYPE.USER);
 
   let updateResult = await DepositTransactionAccess.updateById(transactionId, updatedData);
   return updateResult;
@@ -128,10 +158,10 @@ async function denyDepositTransaction(transactionId, staff) {
 
 //Thêm tiền cho user vì 1 số lý do. Ví dụ hoàn tất xác thực thông tin cá nhân
 //Nên tạo ra 1 transaction đồng thời lưu lại luôn vào lịch sử để dễ kiểm soát
-async function addRewardPointForUser(appUserId, rewardAmount, staff, paymentNote) {
+async function addPointForUser(appUserId, rewardAmount, staff, paymentNote) {
   let rewardWallet = await UserWallet.find({
     appUserId: appUserId,
-    walletType: WALLET_TYPE.REWARD
+    walletType: WALLET_TYPE.POINT
   });
 
   if (rewardWallet === undefined || rewardWallet.length < 0) {
@@ -144,19 +174,33 @@ async function addRewardPointForUser(appUserId, rewardAmount, staff, paymentNote
   let newRewardTransaction = {
     paymentStatus: DEPOSIT_TRX_STATUS.COMPLETED,
     paymentApproveDate: new Date(),
-    paymentNote: `Hệ thống tự động thưởng - lý do: ${paymentNote}`,
-    appUserId: appUserId
+    appUserId: appUserId,
+    walletId: rewardWallet.walletId,
+    paymentRewardAmount: rewardAmount
   }
 
   //if transaction was performed by Staff, then store staff Id for later check
   if (staff) {
     newRewardTransaction.paymentPICId = staff.staffId;
-    newRewardTransaction.paymentNote = `${staff.firstName} ${staff.lastName} (id: ${staff.staffId}) nạp tiền thưởng cho người dùng`;
   }
 
+  if (paymentNote) {
+    newRewardTransaction.paymentNote = paymentNote;
+  }
   let insertResult = await DepositTransactionAccess.insert(newRewardTransaction);
 
   if (insertResult) {
+    // send message
+    // const template = Handlebars.compile(JSON.stringify(REWARD_POINT));
+    // const data = {
+    //   "money": rewardAmount,
+    //   "time": moment().format("hh:mm DD/MM/YYYY")
+    // };
+    // const message = JSON.parse(template(data));
+    // await handleSendMessage(appUserId, message, {
+    //   paymentDepositTransactionId: insertResult[0]
+    // }, MESSAGE_TYPE.USER);
+
     // tự động thêm tiền vào ví thưởng của user
     await UserWallet.incrementBalance(rewardWallet.walletId, rewardAmount);
     return insertResult;
@@ -169,5 +213,5 @@ module.exports = {
   createDepositTransaction,
   approveDepositTransaction,
   denyDepositTransaction,
-  addRewardPointForUser,
+  addPointForUser,
 }

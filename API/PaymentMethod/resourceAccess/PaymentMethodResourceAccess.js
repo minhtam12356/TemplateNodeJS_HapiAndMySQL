@@ -1,48 +1,51 @@
 "use strict";
 require("dotenv").config();
-
-// Import
-const Logger = require('../../../utils/logging');
-const { DB, timestamps } = require("../../../config/database")
+const { DB, timestamps } = require("../../../config/database");
 const Common = require('../../Common/resourceAccess/CommonResourceAccess');
-
-// Table Constant
+const { PAYMENT_TYPE } = require('../PaymentMethodConstant');
 const tableName = "PaymentMethod";
 const primaryKeyField = "paymentMethodId";
 
-// Function Block
 async function createTable() {
-  Logger.info('ResourceAccess', `createTable ${tableName}`);
-
+  console.log(`createTable ${tableName}`);
   return new Promise(async (resolve, reject) => {
-    DB.schema.dropTableIfExists(tableName).then(() => {
-      DB.schema.createTable(tableName, (table) => {
-        table.increments(primaryKeyField).primary();
-        table.string('paymentMethodName');
-        timestamps(table)
-      })
-      .then(async () => {
-        Logger.info(`${tableName}`, `${tableName} table created done`);
-        let methods = [
-          "Ví MOMO",
-          "Cổng VNPAY",
-          "Thẻ ATM / Thẻ nội địa / Ngân hàng",
-          "Thẻ Visa / Master / Credit / Debit",
+    DB.schema.dropTableIfExists(`${tableName}`).then(() => {
+      DB.schema
+        .createTable(`${tableName}`, function (table) {
+          table.increments('paymentMethodId').primary();
+          table.string('paymentMethodName');
+          table.integer('paymentMethodType').defaultTo(PAYMENT_TYPE.ATM_BANK);
+          table.string('paymentMethodIdentityNumber');
+          table.string('paymentMethodReferName');
+          table.string('paymentMethodReceiverName');
+          timestamps(table);
+          table.index('paymentMethodId');
+          table.index('paymentMethodName');
+        })
+        .then(async () => {
+          console.log(`${tableName} table created done`);
+          let paymentMethods = [
+            {
+            paymentMethodName: "ATM / Bank",
+            paymentMethodIdentityNumber: "123577",
+            paymentMethodReferName: "Citi Bank",
+            paymentMethodReceiverName: "David Beckam",
+          },
+          {
+            paymentMethodName: "ATM / Bank",
+            paymentMethodIdentityNumber: "987654321",
+            paymentMethodReferName: "HD Bank",
+            paymentMethodReceiverName: "Ronaldo",
+          },
         ];
-        let methodsArr = [];
-        for (let i = 0; i < methods.length; i++) {
-          const methodName = methods[i];
-          methodsArr.push({
-            paymentMethodName: methodName,
+
+          DB(`${tableName}`).insert(paymentMethods).then((result) => {
+            console.log(`init ${tableName}` + result);
+            resolve();
           });
-        }
-        DB(`${tableName}`).insert(methodsArr).then((result) => {
-          Logger.info(`${tableName}`, `init ${tableName}` + result);
-          resolve();
         });
-      });
-    })
-  })
+    });
+  });
 }
 
 async function initDB() {
@@ -59,22 +62,26 @@ async function updateById(id, data) {
   return await Common.updateById(tableName, dataId, data);
 }
 
-async function deleteById(id, data) {
-  let dataId = {};
-  dataId[primaryKeyField] = id;
-
-  return await Common.deleteById(tableName, dataId, data)
+async function find(filter, skip, limit, order) {
+  filter.isDeleted = 0;
+  return await Common.find(tableName, filter, skip, limit, order);
 }
 
-async function find(filter, skip, limit, order) {
-  return await Common.find(tableName, filter, skip, limit, order)
+async function count(filter, order) {
+  return await Common.count(tableName, primaryKeyField, filter, order);
+}
+
+async function deleteById(id) {
+  let dataId = {};
+  dataId[primaryKeyField] = id;
+  return await Common.deleteById(tableName, dataId)
 }
 
 module.exports = {
   insert,
-  deleteById,
-  updateById,
   find,
+  count,
+  updateById,
   initDB,
-  modelName: tableName
+  deleteById
 };

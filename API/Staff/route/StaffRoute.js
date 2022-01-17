@@ -20,7 +20,7 @@ const insertSchema = {
 const updateSchema = {
   lastName: Joi.string(),
   firstName: Joi.string(),
-  phoneNumber: Joi.string().required(),
+  phoneNumber: Joi.string(),
   active: Joi.number().min(0).max(1),
   twoFACode: Joi.string(),
   telegramId: Joi.string(),

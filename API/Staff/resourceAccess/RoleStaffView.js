@@ -110,11 +110,21 @@ function _makeQueryBuilderByFilter(filter, skip, limit, order) {
 
 async function customSearch(filter, skip, limit, order) {
   let query = _makeQueryBuilderByFilter(filter, skip, limit, order);
+
+  //skip admin
+  query.where('roleId', '>', 1);
+  query.orWhereNull('roleId');
+  
   return await query.select();
 }
 
 async function customCount(filter, order) {
   let query = _makeQueryBuilderByFilter(filter, undefined, undefined, order);
+  
+  //skip admin
+  query.where('roleId', '>', 1);
+  query.orWhereNull('roleId');
+  
   return await query.count(`${primaryKeyField} as count`);
 }
 

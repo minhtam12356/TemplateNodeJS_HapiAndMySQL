@@ -57,7 +57,24 @@ describe(`Tests ${Model.modelName}`, () => {
         done();
       });
   });
-
+  it('user request new deposit payment (to approve)', done => {
+    const body = {
+      paymentAmount: 500000,
+    };
+    chai
+      .request(`0.0.0.0:${process.env.PORT}`)
+      .post(`/${Model.modelName}/user/requestDeposit`)
+      .set("Authorization", `Bearer ${userToken}`)
+      .send(body)
+      .end((err, res) => {
+        if (err) {
+          console.error(err);
+        }
+        checkResponseStatus(res, 200);
+        paymentId = res.body.data[0]
+        done();
+      });
+  });
   it('staff approve deposit payment manually', done => {
     const body = {
       id: paymentId
@@ -480,7 +497,7 @@ describe(`Tests ${Model.modelName}`, () => {
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/${Model.modelName}/depositHistory`)
+      .post(`/${Model.modelName}/user/depositHistory`)
       .set("Authorization", `Bearer ${userToken}`)
       .send(body)
       .end((err, res) => {
@@ -500,7 +517,7 @@ describe(`Tests ${Model.modelName}`, () => {
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/${Model.modelName}/depositHistory`)
+      .post(`/${Model.modelName}/user/depositHistory`)
       .set("Authorization", `Bearer ${userToken}`)
       .send(body)
       .end((err, res) => {
@@ -518,7 +535,7 @@ describe(`Tests ${Model.modelName}`, () => {
     const body = {};
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/${Model.modelName}/depositHistory`)
+      .post(`/${Model.modelName}/user/depositHistory`)
       .set("Authorization", `Bearer ${userToken}`)
       .send(body)
       .end((err, res) => {
@@ -532,49 +549,49 @@ describe(`Tests ${Model.modelName}`, () => {
       });
   });
 
-  it('add reward point for user', done => {
-    let rewardAmount = 100000;
-    const body = {
-      id: userId,
-      amount: rewardAmount
-    };
-    chai
-      .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/${Model.modelName}/addRewardPointForUser`)
-      .set("Authorization", `Bearer ${staffToken}`)
-      .send(body)
-      .end((err, res) => {
-        if (err) {
-          console.error(err);
-        }
-        checkResponseStatus(res, 200);
-        let oldReward = 0;
+  // it('add reward point for user', done => {
+  //   let rewardAmount = 100000;
+  //   const body = {
+  //     id: userId,
+  //     amount: rewardAmount
+  //   };
+  //   chai
+  //     .request(`0.0.0.0:${process.env.PORT}`)
+  //     .post(`/${Model.modelName}/addRewardPointForUser`)
+  //     .set("Authorization", `Bearer ${staffToken}`)
+  //     .send(body)
+  //     .end((err, res) => {
+  //       if (err) {
+  //         console.error(err);
+  //       }
+  //       checkResponseStatus(res, 200);
+  //       let oldReward = 0;
 
-        for (let i = 0; i < userData.wallets.length; i++) {
-          const wallet = userData.wallets[i];
-          if (wallet.walletType === "RewardWallet") {
-            oldReward = wallet.balance;
-            break;
-          }
-        }
+  //       for (let i = 0; i < userData.wallets.length; i++) {
+  //         const wallet = userData.wallets[i];
+  //         if (wallet.walletType === "RewardWallet") {
+  //           oldReward = wallet.balance;
+  //           break;
+  //         }
+  //       }
 
-        TestFunctions.loginUser().then((newUserData) => {
-          let newReward = 0;
-          for (let i = 0; i < newUserData.wallets.length; i++) {
-            const wallet = newUserData.wallets[i];
-            if (wallet.walletType === "RewardWallet") {
-              newReward = wallet.balance;
-              break;
-            }
-          }
+  //       TestFunctions.loginUser().then((newUserData) => {
+  //         let newReward = 0;
+  //         for (let i = 0; i < newUserData.wallets.length; i++) {
+  //           const wallet = newUserData.wallets[i];
+  //           if (wallet.walletType === "RewardWallet") {
+  //             newReward = wallet.balance;
+  //             break;
+  //           }
+  //         }
   
-          //bảo đảm phải thêm đúng lượng điểm
-          expect(newReward).to.equal(oldReward * 1 + rewardAmount * 1);
-          done();
-        });
+  //         //bảo đảm phải thêm đúng lượng điểm
+  //         expect(newReward).to.equal(oldReward * 1 + rewardAmount * 1);
+  //         done();
+  //       });
 
-      });
-  });
+  //     });
+  // });
   
   //TODO
 
@@ -615,6 +632,45 @@ describe(`Tests ${Model.modelName}`, () => {
   //         console.error(err);
   //       }
   //       checkResponseStatus(res, 200);
+  //       done();
+  //     });
+  // });
+  // it('export excel history deposit payment of user', done => {
+  //   const body = {
+  //     id: userId
+  //   };
+  //   chai
+  //     .request(`0.0.0.0:${process.env.PORT}`)
+  //     .post(`/PaymentDepositTransaction/exportExcelHistory`)
+  //     .set("Authorization", `Bearer ${staffToken}`)
+  //     .send(body)
+  //     .end((err, res) => {
+  //       if (err) {
+  //         console.error(err);
+  //       }
+  //       checkResponseStatus(res, 200);
+  //       //bảo đảm phải có lịch sử (vì các case ở trên đã tạo ra cho user này)
+  //       expect(res.body.data.length).to.not.equal(0);
+  //       done();
+  //     });
+  // });
+  // it('export excel history deposit payment of month', done => {
+  //   const body = {
+  //     startDate: faker.date.future().toString(),
+  //     endDate: faker.date.future().toString(),
+  //   };
+  //   chai
+  //     .request(`0.0.0.0:${process.env.PORT}`)
+  //     .post(`/PaymentDepositTransaction/exportSalesToExcel`)
+  //     .set("Authorization", `Bearer ${staffToken}`)
+  //     .send(body)
+  //     .end((err, res) => {
+  //       if (err) {
+  //         console.error(err);
+  //       }
+  //       checkResponseStatus(res, 200);
+  //       //bảo đảm phải có lịch sử (vì các case ở trên đã tạo ra cho user này)
+  //       expect(res.body.data.length).to.not.equal(0);
   //       done();
   //     });
   // });

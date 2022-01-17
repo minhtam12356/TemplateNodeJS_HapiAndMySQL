@@ -14,11 +14,11 @@ const emailTransporter = nodemailer.createTransport({
   },
 });
 
-async function sendTestEmail() {
+async function sendTestEmail(testEmail = "chaupad@gmail.com") {
   let mailBody = "";
   mailBody += "THÔNG BÁO!" + "\r\n\r\n";
   let subject = "[THÔNG BÁO] đây là email test hệ thống";
-  await sendEmail("chaupad@gmail.com", subject, mailBody);
+  await sendEmail(testEmail, subject, mailBody);
 }
 
 async function sendEmail(receiver, subject, body, html, emailClient) {
@@ -65,7 +65,21 @@ async function sendEmail(receiver, subject, body, html, emailClient) {
         resolve(undefined);
       }
     });
+
   });
+}
+
+async function createNewThirdpartyClient(email, password, serviceName = 'gmail', host = 'smtp.gmail.com') {
+  var emailClient = nodemailer.createTransport({
+    service: serviceName,
+    host: host,
+    auth: {
+      user: email,
+      pass: password
+    }
+  });
+
+  return emailClient;
 }
 
 async function createNewClient(smtpHost, smtpPort, smtpSecure, email, password) {
@@ -88,5 +102,6 @@ async function createNewClient(smtpHost, smtpPort, smtpSecure, email, password) 
 module.exports = {
   sendEmail,
   sendTestEmail,
-  createNewClient
+  createNewClient,
+  createNewThirdpartyClient
 };

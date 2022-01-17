@@ -28,7 +28,6 @@ describe(`Tests Upload`, function() {
       "email": faker.internet.email(),
       "password": "string",
       "phoneNumber": "string",
-      "stationsId": 0
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
@@ -45,7 +44,7 @@ describe(`Tests Upload`, function() {
   });
 
   it('Upload user avatar', done => {
-    fs.readFile('uploads/Sample.png', function read(err, data) {
+    fs.readFile('uploads/sampleAvatar.jpg', function read(err, data) {
       if (err) {
         return null;
       }
@@ -53,11 +52,11 @@ describe(`Tests Upload`, function() {
       var base64data = Buffer.from(data, 'binary').toString('base64');
       const body = {
         image: base64data,
-        imageFormat: "png",
+        imageFormat: "jpg",
       };
       chai
         .request(`0.0.0.0:${process.env.PORT}`)
-        .post(`/Upload/uploadMediaFile`)
+        .post(`/Upload/uploadUserAvatar`)
         .set('Authorization', token)
         .send(body)
         .end((err, res) => {
@@ -71,7 +70,7 @@ describe(`Tests Upload`, function() {
   });
   
   it('Upload media file', done => {
-    fs.readFile('uploads/VTSS.png', function read(err, data) {
+    fs.readFile('uploads/sampleAvatar.jpg', function read(err, data) {
       if (err) {
         return null;
       }

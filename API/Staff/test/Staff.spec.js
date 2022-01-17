@@ -14,19 +14,19 @@ const Model = require('../resourceAccess/StaffResourceAccess');
 
 const app = require('../../../server');
 
-describe(`Tests ${Model.modelName}`, function() {
-  let token = "";
-
+describe(`Tests ${Model.modelName}`, function () {
+  let staffToken = "";
+  let staffId;
   before(done => {
-    new Promise(async function(resolve, reject) {
+    new Promise(async function (resolve, reject) {
       resolve();
     }).then(() => done());
   });
 
   it("Login Staff", done => {
     loginStaff().then(result => {
-      if(result && Object.keys(result).length > 0) {
-        token = `Bearer ${result.token}`;
+      if (result && Object.keys(result).length > 0) {
+        staffToken = `Bearer ${result.token}`;
         done();
       }
     });
@@ -37,21 +37,17 @@ describe(`Tests ${Model.modelName}`, function() {
       "lastName": faker.name.lastName(),
       "firstName": faker.name.firstName(),
       "username": faker.name.firstName() + faker.name.lastName(),
-      "email": faker.internet.email()+Math.random(),
+      "email": faker.internet.email() + Math.random(),
       "password": "string",
       "phoneNumber": "string",
-      "AreaCountry": "1",
-      "AreaProvince": "1;2;3;4",
-      "AreaDistrict": '1;3;4;5',
-      "AreaWard": "1;3;4;6"
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
       .post(`/Staff/registerStaff`)
-      .set('Authorization', token)
       .send(body)
       .end((err, res) => {
         checkResponseStatus(res, 200);
+        staffId = res.body.data[0];
         done();
       });
   });
@@ -69,10 +65,10 @@ describe(`Tests ${Model.modelName}`, function() {
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
       .post(`/Staff/registerStaff`)
-      .set('Authorization', token)
+      .set('Authorization', staffToken)
       .send(body)
       .end((err, res) => {
-        if ( err ) {
+        if (err) {
           console.error(err);
         }
         checkResponseStatus(res, 400);
@@ -88,19 +84,15 @@ describe(`Tests ${Model.modelName}`, function() {
       "email": faker.internet.email(),
       "password": "string",
       "phoneNumber": "string",
-      "AreaCountry": "1",
-      "AreaProvince": "PRO1",
-      "AreaDistrict": 'DIST1',
-      "AreaWard": "WA1",
       "roleId": 1
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
       .post(`/Staff/insertStaff`)
-      .set('Authorization', token)
+      .set('Authorization', staffToken)
       .send(body)
       .end((err, res) => {
-        if ( err ) {
+        if (err) {
           console.error(err);
         }
         checkResponseStatus(res, 500);
@@ -112,63 +104,38 @@ describe(`Tests ${Model.modelName}`, function() {
       "lastName": faker.name.lastName(),
       "firstName": faker.name.firstName(),
       "username": faker.name.firstName() + faker.name.lastName(),
-      "email": faker.internet.email()+Math.random(),
+      "email": faker.internet.email() + Math.random(),
       "password": "string",
       "phoneNumber": "string",
-      "AreaCountry": "1",
-      "AreaProvince": "1;2;34;5",
-      "AreaDistrict": '1;2;3;4',
-      "AreaWard": "1;3;7;10"
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
       .post(`/Staff/insertStaff`)
-      .set('Authorization', token)
+      .set('Authorization', staffToken)
       .send(body)
       .end((err, res) => {
-        if ( err ) {
+        if (err) {
           console.error(err);
         }
         checkResponseStatus(res, 200);
         done();
       });
   });
-  
-  it('Delete Staff Success', done => {
-    const body = {
-      "id": 404
-    };
-    chai
-      .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/Staff/deleteStaffById`)
-      .set('Authorization', token)
-      .send(body)
-      .end((err, res) => {
-        if ( err ) {
-          console.error(err);
-        }
-        checkResponseStatus(res, 200);
-        done();
-      });
-  });
-
   it('Update Staff Success', done => {
     const body = {
-      "id": 404,
+      "id": staffId,
       "data": {
         "lastName": faker.name.firstName(),
         "firstName": faker.name.lastName(),
-        "phoneNumber": faker.phone.phoneNumber(),
-        "isDeleted": 0
       }
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
       .post(`/Staff/updateStaffById`)
-      .set('Authorization', token)
+      .set('Authorization', staffToken)
       .send(body)
       .end((err, res) => {
-        if ( err ) {
+        if (err) {
           console.error(err);
         }
         checkResponseStatus(res, 200);
@@ -176,4 +143,21 @@ describe(`Tests ${Model.modelName}`, function() {
       });
   });
 
+  it('Delete Staff Success', done => {
+    const body = {
+      "id": staffId
+    };
+    chai
+      .request(`0.0.0.0:${process.env.PORT}`)
+      .post(`/Staff/deleteStaffById`)
+      .set('Authorization', staffToken)
+      .send(body)
+      .end((err, res) => {
+        if (err) {
+          console.error(err);
+        }
+        checkResponseStatus(res, 200);
+        done();
+      });
+  });
 });
