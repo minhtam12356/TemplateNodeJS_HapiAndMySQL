@@ -38,6 +38,7 @@ async function verifyToken(request, reply) {
     if (result.appUserId) {
       let currentUser = await UserResource.find({appUserId: result.appUserId});
       if (currentUser && currentUser.length > 0 && currentUser[0].active) {
+        //append current user to request
         request.currentUser = currentUser[0];
         resolve("ok");
       } else {
@@ -47,6 +48,7 @@ async function verifyToken(request, reply) {
     } else if (result.staffId) {
       let currentStaff = await StaffResource.find({staffId: result.staffId});
       if (currentStaff && currentStaff.length > 0 && currentStaff[0].active) {
+        //append current user to request
         request.currentUser = currentStaff[0];
         resolve("ok");
       } else {
@@ -170,10 +172,22 @@ async function verifyTokenOrAllowEmpty(request, reply) {
   });
 }
 
+function parseIntArray(array) {
+  let newArray = array.split(";")
+  let result = [];
+  for(let element of newArray) {
+      if(element) {
+          result.push(parseInt(element));
+      }
+  }
+  return result;
+}
+
 module.exports = {
   verifyToken,
   verifyStaffToken,
   verifyOwnerToken,
   verifyAdminToken,
   verifyTokenOrAllowEmpty,
+  parseIntArray,
 };

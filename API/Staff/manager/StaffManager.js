@@ -17,6 +17,24 @@ async function insert(req) {
         return;
       }
 
+      const NOT_VALID = false;
+      if(StaffFunctions.isValidRole(staffData.roleId) === NOT_VALID){
+        reject("invalid role");
+        return;
+      }
+
+      let checkStaff = await StaffResourceAccess.find({username: staffData.username});
+      if(checkStaff && checkStaff.length > 0) {
+        reject('duplicate username');
+        return;
+      }
+      if(staffData.email) {
+        checkStaff = await StaffResourceAccess.find({email: staffData.email});
+        if(checkStaff && checkStaff.length > 0) {
+          reject('duplicate email');
+          return;
+        }
+      }
       //hash password
       staffData.password = StaffFunctions.hashPassword(staffData.password);
 
@@ -64,10 +82,16 @@ async function updateById(req) {
       let staffData = req.payload.data;
       let staffId = req.payload.id;
 
+      const NOT_VALID = false;
+      if(staffId && StaffFunctions.isValidRole(staffId) === NOT_VALID){
+        reject("invalid role");
+        return;
+      }
+
       let updateResult = await StaffResourceAccess.updateById(staffId, staffData);
 
       if (updateResult) {
-        resolve("success");
+        resolve(updateResult);
       } else {
         reject("failed to update staff");
       }
@@ -106,15 +130,15 @@ async function registerStaff(req) {
 async function loginStaff(req) {
   return new Promise(async (resolve, reject) => {
     try {
-      let userName = req.payload.username;
+      let username = req.payload.username;
       let password = req.payload.password;
 
       //verify credential
-      let foundStaff = await StaffFunctions.verifyCredentials(userName, password);
+      let foundStaff = await StaffFunctions.verifyCredentials(username, password);
 
       if (foundStaff) {
         if (!foundStaff.active) {
-          reject("failed");
+          reject("account is locked");
         }
 
         //create new login token
@@ -127,7 +151,7 @@ async function loginStaff(req) {
         return;
       }
 
-      reject("failed to login staff");
+      reject("username or password is wrong");
     } catch (e) {
       Logger.error(__filename, e);
       reject("failed");
@@ -150,11 +174,11 @@ async function resetPasswordStaff(req) {
 async function changePasswordStaff(req) {
   return new Promise(async (resolve, reject) => {
     try {
-      let userName = req.payload.username;
+      let username = req.payload.username;
       let password = req.payload.password;
       let newPassword = req.payload.newPassword;
       //verify credential
-      let foundStaff = await StaffFunctions.verifyCredentials(userName, password);
+      let foundStaff = await StaffFunctions.verifyCredentials(username, password);
 
       if (foundStaff) {
         let result = StaffFunctions.changeStaffPassword(foundStaff, newPassword);
@@ -175,7 +199,6 @@ async function deleteStaffById(req) {
   return new Promise(async (resolve, reject) => {
     try {
       let staffId = req.payload.id;
-
       let result = StaffResourceAccess.updateById(staffId, { isDeleted: 1 });
       if (result) {
         resolve(result);

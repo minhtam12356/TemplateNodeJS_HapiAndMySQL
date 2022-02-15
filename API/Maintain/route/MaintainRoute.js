@@ -132,4 +132,23 @@ module.exports = {
       Response(req, res, "maintainSignup");
     }
   },
+  maintainWarningMessage: {
+    tags: ["api", `${moduleName}`],
+    description: `${moduleName} warning message`,
+    pre: [{ method: CommonFunctions.verifyToken }, {method: CommonFunctions.verifyStaffToken}],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        message: Joi.string().required()
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "maintainWarningMessage");
+    }
+  },
 };

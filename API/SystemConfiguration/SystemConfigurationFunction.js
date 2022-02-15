@@ -5,7 +5,7 @@
 "use strict";
 const SystemConfigurationResourceAccess = require("./resourceAccess/SystemConfigurationResourceAccess");
 async function getSystemConfig() {
-  let config = await SystemConfigurationResourceAccess.find();
+  let config = await SystemConfigurationResourceAccess.find({}, 0, 1);
   if (config && config.length > 0) {
     return config[0];
   }

@@ -13,16 +13,23 @@ async function createTable() {
       DB.schema
         .createTable(`${tableName}`, function (table) {
           table.increments(`${primaryKeyField}`).primary();
+          table.double('exchangeRateCoin'); // tỉ lệ quy đổi xu (VND > XU)
+          table.string('address');
+          table.string('hotline');
           table.string('telegramGroupUrl').defaultTo(''); // link group telegram
           table.string('fbMessengerUrl').defaultTo(''); // link messenger FB
           table.string('zaloUrl').defaultTo(''); //link zalo OA
           table.string('playStoreUrl').defaultTo(''); //link play store
           table.string('appStoreUrl').defaultTo(''); //link app store
+          table.string('instagramUrl').defaultTo(''); //link instagram
           table.string('websiteUrl').defaultTo(''); // website chinh
           table.string('hotlineNumber').defaultTo(''); //hotline
           table.string('address').defaultTo(''); //dia chi cong ty
-          table.string('systemVersion').defaultTo('1.0.0'); //dia chi cong ty
+          table.string('systemVersion').defaultTo('1.0.0'); //version he thong
           table.double('exchangeVNDPrice').defaultTo(23000); //gia quy doi USD - VND 
+          table.string('firstBannerImage');
+          table.string('secondBannerImage');
+          table.string('thirdBannerImage');
           timestamps(table);
           table.index(`${primaryKeyField}`);
         })
@@ -40,6 +47,10 @@ async function seeding() {
   let projectStatus = [
     {
       systemVersion: '1.0.0', 
+      exchangeRateCoin: 1000, 
+      firstBannerImage: `https://${process.env.HOST_NAME}/uploads/BannerHome.png`, 
+      secondBannerImage: `https://${process.env.HOST_NAME}/uploads/BannerHome.png`,
+      thirdBannerImage: `https://${process.env.HOST_NAME}/uploads/BannerHome.png`
     },
   ];
   return new Promise(async (resolve, reject) => {

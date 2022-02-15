@@ -5,7 +5,7 @@ const Logger = require('../../../utils/logging');
 const { DB, timestamps } = require("../../../config/database");
 const Common = require('../../Common/resourceAccess/CommonResourceAccess');
 const tableName = "AreaStreet";
-const primaryKeyField = "AreaStreetId";
+const primaryKeyField = "areaStreetId";
 async function createTable() {
   Logger.info('ResourceAccess', `createTable ${tableName}`);
   return new Promise(async (resolve, reject) => {
@@ -13,11 +13,9 @@ async function createTable() {
       DB.schema
         .createTable(`${tableName}`, function (table) {
           table.increments(`${primaryKeyField}`).primary();
-          table.string('AreaStreetName');
-          table.string('AreaStreetKey');
+          table.string('areaStreetName');
           timestamps(table);
           table.index(`${primaryKeyField}`);
-          table.unique('AreaStreetKey');
         })
         .then(() => {
           Logger.info(`${tableName}`, `${tableName} table created done`);
@@ -53,9 +51,9 @@ function _makeQueryBuilderByFilter(filter, skip, limit, order) {
   let queryBuilder = DB(tableName);
   let filterData = filter ? JSON.parse(JSON.stringify(filter)) : {};
 
-  if(filterData.AreaStreetName) {
-    queryBuilder.where('AreaStreetName', 'like', `%${filter.AreaStreetName}%`);
-    delete filterData.AreaStreetName
+  if(filterData.areaStreetName) {
+    queryBuilder.where('areaStreetName', 'like', `%${filter.areaStreetName}%`);
+    delete filterData.areaStreetName
   }
   queryBuilder.where(filterData);
   queryBuilder.where({ isDeleted: 0 });

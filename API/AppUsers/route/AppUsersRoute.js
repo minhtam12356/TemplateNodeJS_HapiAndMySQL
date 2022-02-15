@@ -27,6 +27,7 @@ const updateSchema = {
   lastName: Joi.string(),
   firstName: Joi.string(),
   phoneNumber: Joi.string(),
+  email: Joi.string().email(),
   birthDay: Joi.string(),
   active: Joi.number().min(0).max(1),
   limitWithdrawDaily: Joi.number().min(0).max(1000000000),
@@ -47,7 +48,7 @@ const updateSchema = {
 const filterSchema = {
   active: Joi.number().min(0).max(1),
   username: Joi.string().alphanum(),
-  email: Joi.string().email(),
+  email: Joi.string(),
   phoneNumber: Joi.string(),
   referUser: Joi.string(),
   name: Joi.string(),
@@ -348,7 +349,6 @@ module.exports = {
         authorization: Joi.string(),
       }).unknown(),
       payload: Joi.object({
-        username: Joi.string().required(),
         password: Joi.string().required(),
         newPassword: Joi.string().required().min(6),
       })
@@ -486,18 +486,8 @@ module.exports = {
         authorization: Joi.string(),
       }).unknown(),
       payload: Joi.object({
-        month: Joi.number().min(1).max(12).required(),
-        year: Joi.number().required(),
-        skip: Joi.number().default(0).min(0),
-        limit: Joi.number().default(20).max(100),
-        order: Joi.object({
-          key: Joi.string()
-            .default("createdAt")
-            .allow(""),
-          value: Joi.string()
-            .default("desc")
-            .allow("")
-        })
+        startDate: Joi.string().required(),
+        endDate: Joi.string().required()
       })
     },
     handler: function (req, res) {
@@ -522,6 +512,15 @@ module.exports = {
         imageFormat: Joi.string().default('png')
       })
     },
+    payload: {
+      maxBytes: 10*1024*1024, //10 mb
+      // output: 'file',
+      parse: true,
+      // allow: 'multipart/form-data',
+      // multipart: {
+      //     output: 'data',
+      // }
+    },
     handler: function (req, res) {
       Response(req, res, "uploadBeforeIdentityCard");
     },
@@ -543,6 +542,15 @@ module.exports = {
         imageData: Joi.binary().encoding('base64'),
         imageFormat: Joi.string().default('png')
       })
+    },
+    payload: {
+      maxBytes: 10*1024*1024, //10 mb
+      // output: 'file',
+      parse: true,
+      // allow: 'multipart/form-data',
+      // multipart: {
+      //     output: 'data',
+      // }
     },
     handler: function (req, res) {
       Response(req, res, "uploadAfterIdentityCard");
@@ -584,6 +592,10 @@ module.exports = {
         imageData: Joi.binary().encoding('base64'),
         imageFormat: Joi.string().default('png')
       })
+    },
+    payload: {
+      maxBytes: 10*1024*1024, //10 mb
+      parse: true,
     },
     handler: function (req, res) {
       Response(req, res, "uploadAvatar");

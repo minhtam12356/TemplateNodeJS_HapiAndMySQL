@@ -6,7 +6,7 @@ const { DB, timestamps } = require("../../../config/database");
 const Common = require('../../Common/resourceAccess/CommonResourceAccess');
 const INIT_DATA = require('../script/data.json');
 const tableName = "CommonPlace";
-const primaryKeyField = "CommonPlaceId";
+const primaryKeyField = "commonPlaceId";
 async function createTable() {
   Logger.info('ResourceAccess', `createTable ${tableName}`);
   return new Promise(async (resolve, reject) => {
@@ -14,12 +14,14 @@ async function createTable() {
       DB.schema
         .createTable(`${tableName}`, function (table) {
           table.increments(`${primaryKeyField}`).primary();
-          table.string('CommonPlaceName');
+          table.string('commonPlaceName');
           table.decimal('lat', 30, 20);
           table.decimal('lng', 30, 20);
-          table.integer("AreaCityId");
-          table.integer("AreaDistrictId");
-          table.integer("AreaWardId");
+          table.integer("areaCountryId").defaultTo(1);
+          table.integer("areaProvinceId");
+          table.integer("areaDistrictId");
+          table.integer("areaWardId");
+          table.string("commonPlaceType");
           timestamps(table);
           table.index(`${primaryKeyField}`);
         })
@@ -92,6 +94,20 @@ async function customCount(filter, order) {
   return await query.count(`${primaryKeyField} as count`);
 }
 
+
+async function findNearPlace(AreaCityId, AreaDistrictId, lat, lng, NEAREST_LAT_LNG) {
+  let data = await DB(tableName).whereNot({
+    'areaProvinceId': AreaCityId,
+    'areaDistrictId': AreaDistrictId
+  }).where(function () {
+    this.orWhere('lng', '>=', lng - NEAREST_LAT_LNG)
+      .orWhere('lng', '<=', lng + NEAREST_LAT_LNG)
+      .orWhere('lat', '<=', lat + NEAREST_LAT_LNG)
+      .orWhere('lat', '>=', lat - NEAREST_LAT_LNG)
+  }).select();
+  return data;
+}
+
 module.exports = {
   insert,
   find,
@@ -99,5 +115,6 @@ module.exports = {
   updateById,
   initDB,
   customSearch,
-  customCount
+  customCount,
+  findNearPlace
 };

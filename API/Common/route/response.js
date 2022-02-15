@@ -19,8 +19,10 @@ module.exports = {
         let responseData = errorCodes[200];
         if (data) {
           responseData.data = data;
+          reply(responseData).code(200);
+        } else {
+          reply(errorCodes[500]).code(500);
         }
-        reply(responseData).code(200);
       }).catch(data => {
         Logger.error(data);
         let error = errorCodes[500];

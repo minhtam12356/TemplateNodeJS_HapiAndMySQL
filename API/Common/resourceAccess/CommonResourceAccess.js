@@ -3,6 +3,8 @@ require("dotenv").config();
 
 const Logger = require('../../../utils/logging');
 const { DB } = require("../../../config/database");
+const cache = require('../../../ThirdParty/Redis/RedisInstance');
+cache.initRedis();
 
 function createOrReplaceView(viewName, viewDefinition) {
   Logger.info("ResourceAccess", "createOrReplaceView: " + viewName);
@@ -16,6 +18,12 @@ async function insert(tableName, data) {
   let result = undefined;
   try {
     result = await DB(tableName).insert(data);
+    if(result) {
+      let id = result[0];
+      let dataTable = await find(tableName, undefined, 0, 1);
+      let dataCache = dataTable[0];
+      await cache.setWithExpire(`${tableName}_${id.toString()}`, JSON.stringify(dataCache));
+    }
   } catch (e) {
     Logger.error("ResourceAccess", `DB INSERT ERROR: ${tableName} : ${JSON.stringify(data)}`);
     Logger.error("ResourceAccess", e);
@@ -81,6 +89,13 @@ async function updateById(tableName, id, data) {
     result = await DB(tableName)
       .where(id)
       .update(data);
+    if(result) {
+      var keys = Object.keys(id);
+      let idValue = id[keys[0]];
+      let dataUpdate = await DB(tableName).select().where(id);
+      await cache.deleteByKey(`${tableName}_${idValue.toString()}`);
+      await cache.setWithExpire(`${tableName}_${idValue.toString()}`, JSON.stringify(dataUpdate[0]));
+    }
   } catch (e) {
     Logger.error("ResourceAccess", `DB UPDATEBYID ERROR: ${tableName} : ${id} - ${JSON.stringify(data)}`);
     Logger.error("ResourceAccess", e);
@@ -102,9 +117,22 @@ async function updateAll(tableName, data, filter = {}) {
   return result;
 }
 
+async function updateAllById(tableName, primaryKeyField, idList, data) {
+  let result = undefined;
+  try {
+    result = await DB(tableName)
+      .whereIn(`${primaryKeyField}`, idList)
+      .update(data);
+  } catch (e) {
+    Logger.error("ResourceAccess", `DB updateAllById ERROR: ${tableName} : ${JSON.stringify(data)}`);
+    Logger.error("ResourceAccess", e);
+  }
+  return result;
+}
+
 function _makeQueryBuilderByFilter(tableName, filter, skip, limit, order) {
   let queryBuilder = DB(tableName);
-  if (filter) {
+  if(filter){
     queryBuilder.where(filter);
   }
 
@@ -116,7 +144,7 @@ function _makeQueryBuilderByFilter(tableName, filter, skip, limit, order) {
     queryBuilder.offset(skip);
   }
 
-  queryBuilder.where({ isDeleted: 0 });
+  queryBuilder.where({isDeleted: 0});
 
   if (order && order.key !== '' && order.value !== '' && (order.value === 'desc' || order.value === 'asc')) {
     queryBuilder.orderBy(order.key, order.value);
@@ -127,6 +155,28 @@ function _makeQueryBuilderByFilter(tableName, filter, skip, limit, order) {
   return queryBuilder;
 }
 
+function _makeQueryBuilderByFilterAllDelete(tableName, filter, skip, limit, order) {
+  let queryBuilder = DB(tableName);
+  if(filter){
+    queryBuilder.where(filter);
+  }
+
+  if (limit) {
+    queryBuilder.limit(limit);
+  }
+
+  if (skip) {
+    queryBuilder.offset(skip);
+  }
+
+  if (order && order.key !== '' && order.value !== '' && (order.value === 'desc' || order.value === 'asc')) {
+    queryBuilder.orderBy(order.key, order.value);
+  } else {
+    queryBuilder.orderBy("createdAt", "desc")
+  }
+
+  return queryBuilder;
+}
 async function find(tableName, filter, skip, limit, order) {
   let queryBuilder = _makeQueryBuilderByFilter(tableName, filter, skip, limit, order)
   return new Promise((resolve, reject) => {
@@ -143,17 +193,38 @@ async function find(tableName, filter, skip, limit, order) {
   });
 }
 
+async function findAllDelete(tableName, filter, skip, limit, order) {
+  let queryBuilder = _makeQueryBuilderByFilterAllDelete(tableName, filter, skip, limit, order)
+  return new Promise((resolve, reject) => {
+    try {
+      queryBuilder.select()
+        .then(records => {
+          resolve(records);
+        });
+    } catch (e) {
+      Logger.error("ResourceAccess", `DB FIND ERROR: ${tableName} : ${JSON.stringify(filter)} - ${skip} - ${limit} ${JSON.stringify(order)}`);
+      Logger.error("ResourceAccess", e);
+      reject(undefined);
+    }
+  });
+}
 async function findById(tableName, key, id) {
   return new Promise((resolve, reject) => {
     try {
-      DB(tableName).select().where(key, id)
-        .then(records => {
-          if (records && records.length > 0) {
-            resolve(records[0]);
-          } else {
-            resolve(undefined);
-          }
-        });
+      cache.getJson(`${tableName}_${id}`).then(result => {
+        if(result) {
+          resolve(result);
+        } else {
+          DB(tableName).select().where(key, id)
+            .then(records => {
+              if(records && records.length > 0) {
+                resolve(records[0]);
+              }else {
+                resolve(undefined);
+              }
+            });
+        }
+      });
     } catch (e) {
       Logger.error("ResourceAccess", `DB FIND ERROR: findById ${tableName} : ${key} - ${id}`);
       Logger.error("ResourceAccess", e);
@@ -184,7 +255,7 @@ async function deleteById(tableName, id) {
   try {
     result = await DB(tableName)
       .where(id)
-      .update({ isDeleted: 1 });
+      .update({isDeleted:1});
   } catch (e) {
     Logger.error("ResourceAccess", `DB DELETEBYID ERROR: ${tableName} : ${id}`);
     Logger.error("ResourceAccess", e);
@@ -258,7 +329,9 @@ module.exports = {
   insert,
   find,
   findById,
+  findAllDelete,
   updateById,
+  updateAllById
   count,
   createOrReplaceView,
   updateAll,

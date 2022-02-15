@@ -7,31 +7,35 @@ const Manager = require(`../manager/${moduleName}Manager`);
 const Joi = require("joi");
 const Response = require("../../Common/route/response").setup(Manager);
 const CommonFunctions = require('../../Common/CommonFunctions');
+const { COMMON_PLACE_TYPE } = require('../CommonPlaceConstant');
 
 const insertCommonPlace = {
-  CommonPlaceName: Joi.string(),
+  commonPlaceName: Joi.string(),
   lat: Joi.number(),
   lng: Joi.number(),
-  AreaCityId: Joi.number(),
-  AreaDistrictId: Joi.number(),
-  AreaWardId: Joi.number()
+  areaProvinceId: Joi.number(),
+  areaDistrictId: Joi.number(),
+  areaWardId: Joi.number(),
+  commonPlaceType: Joi.string().allow(Object.keys(COMMON_PLACE_TYPE))
 };
 
 const filterCommonPlace = {
   ...insertCommonPlace,
-  isHidden: Joi.number()
+  isHidden: Joi.number(),
+  commonPlaceType: Joi.string().allow(Object.keys(COMMON_PLACE_TYPE))
 };
 
 const updateCommonPlace = {
   ...filterCommonPlace,
-  isDeleted: Joi.number()
+  isDeleted: Joi.number(),
+  commonPlaceType: Joi.string().allow(Object.keys(COMMON_PLACE_TYPE))
 }
 
 module.exports = {
   insert: {
     tags: ["api", `${moduleName}`],
     description: `staff insert common place - ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyAdminToken }],
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -50,7 +54,7 @@ module.exports = {
   find: {
     tags: ["api", `${moduleName}`],
     description: `staff get common place - ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyAdminToken }],
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -79,7 +83,7 @@ module.exports = {
   updateById: {
     tags: ["api", `${moduleName}`],
     description: `staff update common place - ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyAdminToken }],
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -88,7 +92,7 @@ module.exports = {
         authorization: Joi.string(),
       }).unknown(),
       payload: Joi.object({
-        CommonPlaceId: Joi.number(),
+        commonPlaceId: Joi.number(),
         data: Joi.object({
           ...updateCommonPlace,
         })
@@ -101,7 +105,7 @@ module.exports = {
   deleteById: {
     tags: ["api", `${moduleName}`],
     description: `staff delete common place - ${moduleName}`,
-    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyAdminToken }],
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
     auth: {
       strategy: 'jwt',
     },
@@ -110,7 +114,7 @@ module.exports = {
         authorization: Joi.string(),
       }).unknown(),
       payload: Joi.object({
-        CommonPlaceId: Joi.number().required()
+        commonPlaceId: Joi.number().required()
       })
     },
     handler: function (req, res) {

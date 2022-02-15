@@ -60,6 +60,12 @@ async function updateById(id, data) {
   return await Common.updateById(tableName, dataId, data);
 }
 
+async function findById(id) {
+  let dataId = {};
+  dataId[primaryKeyField] = id;
+  return await Common.findById(tableName, dataId, id);
+}
+
 async function find(filter, skip, limit, order) {
   return await Common.find(tableName, filter, skip, limit, order);
 }
@@ -142,6 +148,7 @@ module.exports = {
   insert,
   find,
   count,
+  findById,
   updateById,
   initViews,
   sum,

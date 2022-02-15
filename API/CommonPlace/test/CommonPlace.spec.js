@@ -35,12 +35,13 @@ describe(`Tests ${Model.modelName}`, function() {
 
   it('Insert place Success', done => {
     const body = {
-      "CommonPlaceName": faker.name.firstName(),
+      "commonPlaceName": faker.name.firstName(),
       "lat": Math.round(Math.random()*999),
       "lng": Math.round(Math.random()*999),
-      "AreaCityId": 2,
-      "AreaDistrictId": 3,
-      "AreaWardId": 5
+      "commonPlaceType": "PARK",
+      "areaProvinceId": 2,
+      "areaDistrictId": 3,
+      "areaWardId": 5
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
@@ -61,7 +62,7 @@ describe(`Tests ${Model.modelName}`, function() {
 
   it('Update Place Success', done => {
     const body = {
-      "CommonPlaceId": id,
+      "commonPlaceId": id,
       "data": {
         "isDeleted": 1
       }
@@ -82,7 +83,7 @@ describe(`Tests ${Model.modelName}`, function() {
 
   it('Delete Place Success', done => {
     const body = {
-      "CommonPlaceId": id
+      "commonPlaceId": id
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)

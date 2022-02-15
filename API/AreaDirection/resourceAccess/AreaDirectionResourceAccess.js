@@ -4,9 +4,8 @@ require("dotenv").config();
 const Logger = require('../../../utils/logging');
 const { DB, timestamps } = require("../../../config/database");
 const Common = require('../../Common/resourceAccess/CommonResourceAccess');
-const { nonAccentVietnamese } = require('../../ApiUtils/utilFunctions');
 const tableName = "AreaDirection";
-const primaryKeyField = "AreaDirectionId";
+const primaryKeyField = "areaDirectionId";
 async function createTable() {
   Logger.info('ResourceAccess', `createTable ${tableName}`);
   return new Promise(async (resolve, reject) => {
@@ -14,11 +13,9 @@ async function createTable() {
       DB.schema
         .createTable(`${tableName}`, function (table) {
           table.increments(`${primaryKeyField}`).primary();
-          table.string('AreaDirectionName');
-          table.string('AreaDirectionKey');
+          table.string('areaDirectionName');
           timestamps(table);
           table.index(`${primaryKeyField}`);
-          table.unique('AreaDirectionKey');
         })
         .then(() => {
           Logger.info(`${tableName}`, `${tableName} table created done`);
@@ -35,8 +32,7 @@ async function createTable() {
           const formattedDAta = [];
           for(let i = 0; i < data.length; i++) {
             let obj = {
-              "AreaDirectionName": data[i],
-              "AreaDirectionKey": nonAccentVietnamese(data[i]).toUpperCase().replace(/\s/ig, '_')
+              "areaDirectionName": data[i]
             }
             formattedDAta.push(obj);
           }

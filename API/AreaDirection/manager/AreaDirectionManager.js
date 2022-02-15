@@ -4,6 +4,7 @@
  "use strict";
  const AreaDirection = require("../resourceAccess/AreaDirectionResourceAccess");
  const Logger = require('../../../utils/logging');
+const { nonAccentVietnamese } = require("../../ApiUtils/utilFunctions");
 
  async function insert(req) {
    return new Promise(async (resolve, reject) => {

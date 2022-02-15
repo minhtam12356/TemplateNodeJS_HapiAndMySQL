@@ -3,11 +3,16 @@
  */
 "use strict";
 const AppUsersResourceAccess = require("../resourceAccess/AppUsersResourceAccess");
+const AppUserView = require("../resourceAccess/AppUserView");
 const AppUsersFunctions = require("../AppUsersFunctions");
 const TokenFunction = require('../../ApiUtils/token');
 const Logger = require('../../../utils/logging');
 const UploadFunction = require('../../Upload/UploadFunctions');
 const { USER_VERIFY_INFO_STATUS, USER_VERIFY_EMAIL_STATUS, USER_VERIFY_PHONE_NUMBER_STATUS, USER_ERROR } = require("../AppUserConstant");
+const MessageCustomerResourceAccess = require("../../CustomerMessage/resourceAccess/MessageCustomerResourceAccess");
+const { APPROVE_USER_INFO, REFUSED_USER_INFO, USER_LOCKED, USER_ACTIVE } = require("../../CustomerMessage/CustomerMessageConstant");
+const moment = require('moment');
+const { handleSendMessageUser } = require('../../CustomerMessage/CustomerMessageFunctions');
 
 async function insert(req) {
   return new Promise(async (resolve, reject) => {
@@ -59,14 +64,47 @@ async function find(req) {
   });
 };
 
+async function checkUser(userData, currentUser) {
+  let user;
+  if (userData.email) {
+    user = await AppUsersResourceAccess.find({ email: userData.email });
+    if (user && user.length > 0 && currentUser.email !== user[0].email) {
+      return -1;
+    }
+  }
+  if (userData.phoneNumber) {
+    user = await AppUsersResourceAccess.find({ phoneNumber: userData.phoneNumber });
+    if (user && user.length > 0 && currentUser.phoneNumber !== user[0].phoneNumber) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
 async function updateById(req) {
   return new Promise(async (resolve, reject) => {
     try {
       let userData = req.payload.data;
       let appUserId = req.payload.id;
+      let resultCheck = await checkUser(userData, user);
+      if (resultCheck == -1) {
+        reject('email is already exist');
+      } else if (resultCheck == 0) {
+        reject('phone number is already exist');
+      }
       let updateResult = await AppUsersResourceAccess.updateById(appUserId, userData);
       if (updateResult) {
-        resolve("success");
+        // send message to user
+        if (Object.keys(userData).indexOf("active") !== -1) {
+          if (userData.active === 0) {
+            // làm này để cho user thông báo biết đã bị khoá còn trăn trối
+            handleSendMessageUser(USER_LOCKED, { time: moment().format("hh:mm DD/MM/YYYY") }, appUserId, { isForceLogout: true });
+            AppUsersResourceAccess.updateById(appUserId, { active: userData.active });
+          } else {
+            handleSendMessageUser(USER_ACTIVE, null, appUserId, null);
+          }
+        }
+        resolve(updateResult);
       } else {
         reject("failed to update user");
       }
@@ -98,8 +136,10 @@ async function findById(req) {
 async function userGetDetailById(req) {
   return new Promise(async (resolve, reject) => {
     try {
-      const foundUser = await AppUsersFunctions.retrieveUserDetail(req.currentUser.appUserId);
+      let foundUser = await AppUsersFunctions.retrieveUserDetail(req.currentUser.appUserId);
       if (foundUser) {
+        let countNotification = await MessageCustomerResourceAccess.count({ customerId: req.currentUser.appUserId, isRead: 0 });
+        foundUser.unreadMessage = countNotification[0].count;
         resolve(foundUser);
       } else {
         reject("Get detail failed");
@@ -129,7 +169,14 @@ async function registerUserByPhone(req) {
     if (insertResult) {
       resolve(insertResult);
     } else {
-      reject("failed")
+    Logger.error(`Can not registerUserByPhone`);
+      if (e === USER_ERROR.INVALID_REFER_USER) {
+        reject(USER_ERROR.INVALID_REFER_USER);
+      } else if (e = USER_ERROR.DUPLICATED_USER) {
+        reject(USER_ERROR.DUPLICATED_USER);
+      } else {
+        reject("failed");
+      }
     }
     return;
   });
@@ -138,14 +185,17 @@ async function registerUserByPhone(req) {
 async function loginByPhone(req) {
   return new Promise(async (resolve, reject) => {
     try {
-      let userName = req.payload.phoneNumber;
+      let username = req.payload.phoneNumber;
       let password = req.payload.password;
 
       //verify credential
-      let foundUser = await AppUsersFunctions.verifyUserCredentials(userName, password);
+      let foundUser = await AppUsersFunctions.verifyUserCredentials(username, password);
 
       if (foundUser) {
-        let countNotification = await MessageCustomerResourceAccess.count({customerId: foundUser.appUserId, isRead: 0});
+        if (foundUser.active === 0) {
+          reject('user is locked');
+        }
+        let countNotification = await MessageCustomerResourceAccess.count({ customerId: foundUser.appUserId, isRead: 0 });
         foundUser.unreadMessage = countNotification[0].count;
 
         await AppUsersResourceAccess.updateById(foundUser.appUserId, { lastActiveAt: new Date() });
@@ -173,13 +223,16 @@ async function loginByPhone(req) {
 async function loginUser(req) {
   return new Promise(async (resolve, reject) => {
     try {
-      let userName = req.payload.username;
+      let username = req.payload.username;
       let password = req.payload.password;
 
       //verify credential
-      let foundUser = await AppUsersFunctions.verifyUserCredentials(userName, password);
+      let foundUser = await AppUsersFunctions.verifyUserCredentials(username, password);
 
       if (foundUser) {
+        if (foundUser.active === 0) {
+          reject('user is locked');
+        }
         await AppUsersResourceAccess.updateById(foundUser.appUserId, { lastActiveAt: new Date() });
 
         if (foundUser.twoFAEnable && foundUser.twoFAEnable > 0) {
@@ -191,7 +244,7 @@ async function loginUser(req) {
           resolve(foundUser);
         }
       } else {
-        Logger.error(`username ${userName} or password ${password} is wrong`);
+        Logger.error(`username ${username} or password ${password} is wrong`);
       }
 
       reject("failed");
@@ -206,11 +259,11 @@ async function loginUser(req) {
 async function changePasswordUser(req) {
   return new Promise(async (resolve, reject) => {
     try {
-      let userName = req.payload.username;
+      let username = req.currentUser.username;
       let password = req.payload.password;
       let newPassword = req.payload.newPassword;
       //verify credential
-      let foundUser = await AppUsersFunctions.verifyUserCredentials(userName, password);
+      let foundUser = await AppUsersFunctions.verifyUserCredentials(username, password);
 
       if (foundUser) {
         let result = AppUsersFunctions.changeUserPassword(foundUser, newPassword);
@@ -260,19 +313,19 @@ async function verify2FA(req) {
   });
 }
 
-async function _loginSocial(userName, password, name, email, avatar, socialInfo) {
+async function _loginSocial(username, password, name, email, avatar, socialInfo) {
   //verify credential
-  let foundUser = await AppUsersFunctions.verifyUserCredentials(userName, password);
+  let foundUser = await AppUsersResourceAccess.find({
+    username: username
+  });
 
   //if user is not found
-  if (!foundUser) {
+  if (foundUser === undefined || foundUser.length < 1) {
     let newUserData = {
-      userName: userName,
+      username: username,
       password: password,
       firstName: name,
-      email: email,
       userAvatar: avatar,
-
     }
 
     if (socialInfo) {
@@ -284,9 +337,12 @@ async function _loginSocial(userName, password, name, email, avatar, socialInfo)
     if (!registerResult) {
       return undefined;
     }
-  }
 
-  foundUser = await AppUsersFunctions.verifyUserCredentials(userName, password);
+    foundUser = await AppUsersFunctions.verifyUserCredentials(username, password);
+  } else {
+    foundUser = foundUser[0]
+    foundUser = await AppUsersFunctions.retrieveUserDetail(foundUser.appUserId);
+  }
 
   await AppUsersResourceAccess.updateById(foundUser.appUserId, { lastActiveAt: new Date() });
 
@@ -304,16 +360,19 @@ async function loginFacebook(req) {
   return new Promise(async (resolve, reject) => {
     try {
       if (req.payload.facebook_id && req.payload.facebook_id !== "" && req.payload.facebook_id !== null) {
-        let userName = "FB_" + req.payload.facebook_id;
+        let username = "FB_" + req.payload.facebook_id;
         let password = req.payload.facebook_id;
         let avatar = req.payload.facebook_avatar;
         let email = req.payload.facebook_email;
         let firstName = req.payload.facebook_name;
-        if (email && email !== null && email !== "") {
-          userName = email;
-        }
-        let loginResult = await _loginSocial(userName, password, firstName, email, avatar, req.payload);
+
+        let loginResult = await _loginSocial(username, password, firstName, email, avatar, req.payload);
         if (loginResult) {
+          if (loginResult.active === 0) {
+            reject('user is locked');
+          }
+          let countNotification = await MessageCustomerResourceAccess.count({ customerId: loginResult.appUserId, isRead: 0 });
+          loginResult.unreadMessage = countNotification[0].count;
           resolve(loginResult);
         } else {
           reject("failed");
@@ -332,16 +391,19 @@ async function loginGoogle(req) {
   return new Promise(async (resolve, reject) => {
     try {
       if (req.payload.google_id && req.payload.google_id !== "" && req.payload.google_id !== null) {
-        let userName = "GOOGLE_" + req.payload.google_id;
+        let username = "GOOGLE_" + req.payload.google_id;
         let password = req.payload.google_id;
         let avatar = req.payload.google_avatar;
         let email = req.payload.google_email;
         let firstName = req.payload.google_name;
-        if (email && email !== null && email !== "") {
-          userName = email;
-        }
-        let loginResult = await _loginSocial(userName, password, firstName, email, avatar, req.payload);
+
+        let loginResult = await _loginSocial(username, password, firstName, email, avatar, req.payload);
         if (loginResult) {
+          if (loginResult.active === 0) {
+            reject('user is locked');
+          }
+          let countNotification = await MessageCustomerResourceAccess.count({ customerId: loginResult.appUserId, isRead: 0 });
+          loginResult.unreadMessage = countNotification[0].count;
           resolve(loginResult);
         } else {
           reject("failed");
@@ -360,14 +422,19 @@ async function loginApple(req) {
   return new Promise(async (resolve, reject) => {
     try {
       if (req.payload.apple_id && req.payload.apple_id !== "" && req.payload.apple_id !== null) {
-        let userName = "APPLE_" + req.payload.apple_id;
+        let username = "APPLE_" + req.payload.apple_id;
         let password = req.payload.apple_id;
         let avatar = req.payload.apple_avatar;
         let email = req.payload.apple_email;
         let firstName = req.payload.apple_name;
 
-        let loginResult = await _loginSocial(userName, password, firstName, email, avatar, req.payload);
+        let loginResult = await _loginSocial(username, password, firstName, email, avatar, req.payload);
         if (loginResult) {
+          if (loginResult.active === 0) {
+            reject('user is locked');
+          }
+          let countNotification = await MessageCustomerResourceAccess.count({ customerId: loginResult.appUserId, isRead: 0 });
+          loginResult.unreadMessage = countNotification[0].count;
           resolve(loginResult);
         } else {
           reject("failed");
@@ -386,14 +453,19 @@ async function loginZalo(req) {
   return new Promise(async (resolve, reject) => {
     try {
       if (req.payload.zalo_id && req.payload.zalo_id !== "" && req.payload.zalo_id !== null) {
-        let userName = "ZALO_" + req.payload.zalo_id;
+        let username = "ZALO_" + req.payload.zalo_id;
         let password = req.payload.zalo_id;
         let avatar = req.payload.zalo_avatar;
         let email = req.payload.zalo_email;
         let firstName = req.payload.zalo_name;
 
-        let loginResult = await _loginSocial(userName, password, firstName, email, avatar, req.payload);
+        let loginResult = await _loginSocial(username, password, firstName, email, avatar, req.payload);
         if (loginResult) {
+          if (loginResult.active === 0) {
+            reject('user is locked');
+          }
+          let countNotification = await MessageCustomerResourceAccess.count({ customerId: loginResult.appUserId, isRead: 0 });
+          loginResult.unreadMessage = countNotification[0].count;
           resolve(loginResult);
         } else {
           reject("failed");
@@ -413,6 +485,12 @@ async function userUpdateInfo(req) {
     try {
       let userData = req.payload.data;
       let id = req.payload.id;
+      let resultCheck = await checkUser(userData, req.currentUser);
+      if (resultCheck == -1) {
+        reject('email is already exist');
+      } else if (resultCheck == 0) {
+        reject('phone number is already exist');
+      }
       if(userData.phoneNumber !== null && userData.phoneNumber !== undefined) {
         userData.isVerifiedPhoneNumber = USER_VERIFY_PHONE_NUMBER_STATUS.IS_VERIFIED;
       }
@@ -438,31 +516,56 @@ async function userUpdateInfo(req) {
 async function getUsersByMonth(req) {
   return new Promise(async (resolve, reject) => {
     try {
-      let month = req.payload.month;
-      let year = req.payload.year;
-      let skip = req.payload.skip;
-      let limit = req.payload.limit;
-      let order = req.payload.order;
-      const staff = req.currentUser;
+      let startDate = req.payload.startDate;
+      let endDate = req.payload.endDate;
+      let start = new Date(startDate);
+      let end = new Date(endDate);
+      var diff = (end - start) / 1000 / 60 / 60 / 24;
+      if (diff > 365) {
+        reject('start date and end date is so far')
+      }
+      let staff = req.currentUser;
       let filter = {};
-      if(staff.roleId && staff.roleId !== 1) {
+      if (staff.roleId && staff.roleId !== 1) {
         filter.areaProvinceId = staff.areaProvinceId;
         filter.areaDistrictId = staff.areaDistrictId;
         filter.areaWardId = staff.areaWardId;
       }
-      let users = await AppUsersResourceAccess.find(filter, skip, limit, order);
-      let usersRes = [];
-      users.forEach(item => {
-        let createAt = new Date(item.createdAt);
-        if (createAt.getMonth() + 1 === month && createAt.getFullYear() === year) {
-          usersRes.push(item);
+      var users = await AppUserView.countUserMonthByYear(filter, startDate, endDate);
+      end = new Date(moment(endDate).endOf('month').format('YYYY-MM-DD'));
+      while (start <= end) {
+        let year = start.getFullYear();
+        let month = start.getMonth() + 1;
+        let count = 0;
+        users.forEach(item => {
+          if (item.createMonth == month && item.createYear == year) {
+            count++;
+          }
+        })
+        if (count == 0) {
+          users.push({
+            createMonth: month,
+            createYear: year,
+            countCreateMonth: 0
+          })
         }
-      });
-      if (usersRes) {
-        resolve({ data: usersRes, total: usersRes.length });
-      } else {
-        resolve({ data: [], total: 0 });
+        start.setMonth(month);
       }
+      for (let i = 0; i < users.length - 1; i++) {
+        for (let j = i + 1; j < users.length; j++) {
+          if (users[i].createYear > users[j].createYear) {
+            let temp = users[i];
+            users[i] = users[j];
+            users[j] = temp;
+          } else if (users[i].createMonth > users[j].createMonth
+            && users[i].createYear == users[j].createYear) {
+            let temp = users[i];
+            users[i] = users[j];
+            users[j] = temp;
+          }
+        }
+      }
+      resolve(users);
     } catch (e) {
       Logger.error(__filename, e);
       reject("failed");
@@ -556,11 +659,11 @@ async function verifyInfoUser(req) {
     try {
       let appUserId = req.payload.id
       const staff = req.currentUser;
-      if(staff.roleId && staff.roleId !== 1) {
+      if (staff.roleId && staff.roleId !== 1) {
         const foundUser = await AppUsersResourceAccess.findById(appUserId);
-        if(!foundUser) reject("error");
-        const verifyArea = verifyAreaPermission(staff, foundUser); 
-        if(!verifyArea) reject("Don't have permission");
+        if (!foundUser) reject("error");
+        const verifyArea = verifyAreaPermission(staff, foundUser);
+        if (!verifyArea) reject("Don't have permission");
       }
 
       let updateResult = await AppUsersResourceAccess.updateById(appUserId, {
@@ -568,6 +671,10 @@ async function verifyInfoUser(req) {
         verifiedAt: new Date()
       });
       if (updateResult) {
+        const messageData = {
+          time: moment(new Date()).format("hh:mm DD/MM/YYYY")
+        }
+        handleSendMessageUser(APPROVE_USER_INFO, messageData, appUserId, { validated: true });
         resolve(updateResult);
       } else {
         resolve("failed to verify info user");
@@ -585,11 +692,11 @@ async function rejectInfoUser(req) {
     try {
       let appUserId = req.payload.id;
       const staff = req.currentUser;
-      if(staff.roleId && staff.roleId !== 1) {
+      if (staff.roleId && staff.roleId !== 1) {
         const foundUser = await AppUsersResourceAccess.findById(appUserId);
-        if(!foundUser) reject("error");
-        const verifyArea = verifyAreaPermission(staff, foundUser); 
-        if(!verifyArea) reject("Don't have permission");
+        if (!foundUser) reject("error");
+        const verifyArea = verifyAreaPermission(staff, foundUser);
+        if (!verifyArea) reject("Don't have permission");
       }
 
       let updateResult = await AppUsersResourceAccess.updateById(appUserId, {
@@ -597,6 +704,10 @@ async function rejectInfoUser(req) {
         verifiedAt: new Date()
       });
       if (updateResult) {
+        const messageData = {
+          time: moment(new Date()).format("hh:mm DD/MM/YYYY")
+        }
+        handleSendMessageUser(REFUSED_USER_INFO, messageData, appUserId, { validated: true });
         resolve(updateResult);
       } else {
         resolve("failed to reject info user");
@@ -646,7 +757,7 @@ async function exportExcel(req) {
       let filter = req.payload.filter;
       let order = req.payload.order;
       const staff = req.currentUser;
-      if(staff.roleId && staff.roleId !== 1) {
+      if (staff.roleId && staff.roleId !== 1) {
         filter.areaProvinceId = staff.areaProvinceId;
         filter.areaDistrictId = staff.areaDistrictId;
         filter.areaWardId = staff.areaWardId;
@@ -672,8 +783,8 @@ async function forgotPassword(req) {
   return new Promise(async (resolve, reject) => {
     try {
       let email = req.payload.email;
-      let result = await AppUsersResourceAccess.find({email: email});
-      if(result && result.length > 0) {
+      let result = await AppUsersResourceAccess.find({ email: email });
+      if (result && result.length > 0) {
         let userToken = await TokenFunction.createToken(result[0]);
         await AppUsersFunctions.sendEmailToResetPassword(result[0], userToken, email);
         resolve('success');
@@ -719,22 +830,22 @@ async function forgotPasswordOTP(req) {
   });
 }
 
-async function resetPasswordBaseOnUserToken(req){
+async function resetPasswordBaseOnUserToken(req) {
   return new Promise(async (resolve, reject) => {
-    try{
+    try {
       let newPassword = req.payload.password;
       let user = req.currentUser;
       if (user === undefined || user.appUserId === null) {
         reject('invalid token')
       } else {
         let result = await AppUsersFunctions.changeUserPassword(user, newPassword);
-        if(result) {
+        if (result) {
           resolve('reset password success');
         } else {
           reject('failed');
         }
       }
-    } catch(e) {
+    } catch (e) {
       Logger.error(__filename, e);
       reject("failed");
     }
@@ -747,12 +858,12 @@ async function adminResetPassword(req) {
       let userId = req.payload.id;
       let user = await AppUsersResourceAccess.findById(userId);
       const staff = req.currentUser;
-      if(staff.roleId && staff.roleId !== 1) {
-        if(!user) reject("error");
-        const verifyArea = verifyAreaPermission(staff, user); 
-        if(!verifyArea) reject("Don't have permission");
+      if (staff.roleId && staff.roleId !== 1) {
+        if (!user) reject("error");
+        const verifyArea = verifyAreaPermission(staff, user);
+        if (!verifyArea) reject("Don't have permission");
       }
-      if(user) {
+      if (user) {
         let userToken = await TokenFunction.createToken(user);
         await AppUsersFunctions.sendEmailToResetPassword(user, userToken, user.email);
         resolve('success');
@@ -760,7 +871,7 @@ async function adminResetPassword(req) {
         console.error(`user is not existed in system`);
         resolve('success');
       }
-    } catch(e) {
+    } catch (e) {
       Logger.error(__filename, e);
       reject("failed");
     }
@@ -774,8 +885,12 @@ async function verifyEmailUser(req) {
       if (user === undefined || user.appUserId === null) {
         reject('invalid token')
       } else {
-        let result = await AppUsersResourceAccess.updateById(user.appUserId, {isVerifiedEmail: USER_VERIFY_EMAIL_STATUS.IS_VERIFIED});
-        if(result) {
+        let result = await AppUsersResourceAccess.updateById(user.appUserId, { isVerifiedEmail: USER_VERIFY_EMAIL_STATUS.IS_VERIFIED });
+        if (result) {
+          const messageData = {
+            time: moment(new Date()).format("hh:mm DD/MM/YYYY")
+          }
+          handleSendMessageUser(APPROVE_USER_INFO, messageData, user.appUserId, { validated: true });
           resolve('Verify email success');
         } else {
           reject('failed');
@@ -793,8 +908,8 @@ async function sendMailToVerifyEmail(req) {
     try {
       let email = req.payload.email;
       let userId = req.currentUser.appUserId;
-      let result = await AppUsersResourceAccess.find({appUserId: userId, email: email});
-      if(result && result.length > 0) {
+      let result = await AppUsersResourceAccess.find({ appUserId: userId, email: email });
+      if (result && result.length > 0) {
         let userToken = await TokenFunction.createToken(result[0]);
         await AppUsersFunctions.sendEmailToVerifyEmail(result[0], userToken, email);
         resolve('success');
@@ -856,6 +971,7 @@ async function adminChangeSecondaryPasswordUser(req) {
 };
 module.exports = {
   insert,
+  checkUser,
   find,
   updateById,
   findById,

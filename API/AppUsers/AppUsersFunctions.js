@@ -54,8 +54,8 @@ function unhashPassword(hash) {
 }
 
 function verifyUniqueUser(req, res) {
-    // Find an entry from the database that
-    // matches either the email or username
+  // Find an entry from the database that
+  // matches either the email or username
 }
 
 async function verifyUserCredentials(username, password) {
@@ -111,31 +111,7 @@ async function retrieveUserDetail(appUserId) {
     //retrive user wallet info
     let wallets = await WalletBalanceUnitView.find({ appUserId: appUserId });
     if (wallets && wallets.length > 0) {
-      foundUser.wallets = [];
-      let walletList = [];
-      let balance = 0;
-      for (let i = 0; i < wallets.length; i++) {
-        const userWallet = wallets[i];
-        if (userWallet.walletType !== WALLET_TYPE.CRYPTO) {
-          walletList.push(userWallet);
-        } else {
-          if (user.memberLevelName === USER_MEMBER_LEVEL.MEMBER) {
-            balance = balance + userWallet.balance * userWallet.userSellPrice
-          } else {
-            balance = balance + userWallet.balance * userWallet.agencySellPrice
-          }
-        }
-      }
-
-      for (let i = 0; i < wallets.length; i++) {
-        let userWallet = wallets[i];
-        if (userWallet.walletType === WALLET_TYPE.CRYPTO) {
-          userWallet.balance = balance;
-          walletList.push(userWallet);
-          break;
-        }
-      }
-      foundUser.wallets = walletList;
+      foundUser.wallets = wallets;
     }
 
     //neu la user dai ly thi se co QRCode gioi thieu
@@ -214,9 +190,28 @@ const verify2FACode = (token, topSecret) => {
   return authenticator.check(token, topSecret)
 }
 
-async function createNewUser(userData, error) {
+async function createNewUser(userData) {
   return new Promise(async (resolve, reject) => {
-    try {
+    let checkUser = await AppUsersResourceAccess.find({ username: userData.username });
+    if (checkUser && checkUser.length > 0) {
+      reject(ERROR.DUPLICATED_USER);
+      return;
+    }
+    if (userData.email) {
+      checkUser = await AppUsersResourceAccess.find({ email: userData.email });
+      if (checkUser && checkUser.length > 0) {
+        reject(ERROR.DUPLICATED_USER);
+        return;
+      }
+    }
+    if (userData.phoneNumber) {
+      checkUser = await AppUsersResourceAccess.find({ phoneNumber: userData.phoneNumber });
+      if (checkUser && checkUser.length > 0) {
+        reject(ERROR.DUPLICATED_USER);
+        return;
+      }
+    }
+    
       //hash password
       userData.password = hashPassword(userData.password);
       if(userData.userAvatar ===  null || userData.userAvatar === undefined || userData.userAvatar === "") {
@@ -272,13 +267,13 @@ async function createNewUser(userData, error) {
 async function sendEmailToResetPassword(user, userToken, email) {
   let link = `${process.env.LINK_WEB_SITE}/resetPassword?token=${userToken}`;
   let userType = '';
-  if(user.userType === USER_TYPE.PERSONAL) {
+  if (user.userType === USER_TYPE.PERSONAL) {
     userType = 'Cá nhân';
   } else {
     userType = 'Môi giới'
   }
-  await EmailClient.sendEmail(email,
-    'support@fihome.vn - Thông Báo Thay Đổi Mật Khẩu',
+  let emailResult = await EmailClient.sendEmail(email,
+    `${process.env.SMTP_EMAIL} - Thông Báo Thay Đổi Mật Khẩu`,
     'ĐẶT LẠI MẬT KHẨU CỦA BẠN',
     `<div style="width: 100%; font-family: Arial, Helvetica, sans-serif;">
       <div style="display: flex; width: 100%; align-items: center; justify-content: center; justify-items: center;">
@@ -288,7 +283,7 @@ async function sendEmailToResetPassword(user, userToken, email) {
               <div>Loại tài khoản là <strong>${userType}</strong></div>
               <p>Để cấp lại mật khẩu, Vui lòng click vào đường dẫn dưới đây: <strong><a href="${link}" style="color: blue;">Link xác nhận khôi phục mật khẩu</a></strong></p>
               <br />
-              <p>Mọi thắc mắc vui lòng liên hệ hòm email: <a href="">support@fihome.vn</a> để được hỗ trợ và giải đáp</p>
+              <p>Mọi thắc mắc vui lòng liên hệ hòm email: <a href="">${process.env.SMTP_EMAIL}</a> để được hỗ trợ và giải đáp</p>
               <p>Chúc bạn có những trải nghiệm thú vị cùng <a href="${process.env.LINK_WEB_SITE}" style="text-decoration: none; cursor: pointer; color: cadetblue;">fihome.com.vn</a></p>
               <div>Trân trọng,</div>
               <div>Ban quản trị</div>
@@ -296,18 +291,19 @@ async function sendEmailToResetPassword(user, userToken, email) {
       </div>
     </div>`,
     undefined);
+  return emailResult;
 }
 
 async function sendEmailToVerifyEmail(user, userToken, email) {
   let link = `${process.env.LINK_WEB_SITE}/verifyEmail?token=${userToken}`;
   let userType = '';
-  if(user.userType === USER_TYPE.PERSONAL) {
+  if (user.userType === USER_TYPE.PERSONAL) {
     userType = 'Cá nhân';
   } else {
     userType = 'Môi giới'
   }
-  await EmailClient.sendEmail(email,
-    'support@fihome.vn - Xác Thực Email Của Bạn',
+  let emailResult = await EmailClient.sendEmail(email,
+    `${process.env.SMTP_EMAIL} - Xác Thực Email Của Bạn`,
     'XÁC THỰC EMAIL CỦA BẠN',
     `<div style="width: 100%; font-family: Arial, Helvetica, sans-serif;">
     <div style="display: flex; width: 100%; align-items: center; justify-content: center; justify-items: center;">
@@ -317,7 +313,7 @@ async function sendEmailToVerifyEmail(user, userToken, email) {
             <div>Loại tài khoản là <strong>${userType}</strong></div>
             <p>Để xác thực email, Vui lòng click vào đường dẫn dưới đây: <strong><a href="${link}" style="color: blue;">Link xác thực email</a></strong></p>
             <br />
-            <p>Mọi thắc mắc vui lòng liên hệ hòm email: <a href="">support@fihome.vn</a> để được hỗ trợ và giải đáp</p>
+            <p>Mọi thắc mắc vui lòng liên hệ hòm email: <a href="">${process.env.SMTP_EMAIL}</a> để được hỗ trợ và giải đáp</p>
             <p>Chúc bạn có những trải nghiệm thú vị cùng <a href="${process.env.LINK_WEB_SITE}" style="text-decoration: none; cursor: pointer; color: cadetblue;">fihome.com.vn</a></p>
             <div>Trân trọng,</div>
             <div>Ban quản trị</div>
@@ -325,6 +321,7 @@ async function sendEmailToVerifyEmail(user, userToken, email) {
     </div>
   </div>`,
     undefined);
+  return emailResult;
 }
 module.exports = {
   verifyUniqueUser,

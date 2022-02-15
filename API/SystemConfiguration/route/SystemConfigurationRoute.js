@@ -14,6 +14,26 @@ module.exports = {
     tags: ["api", `${moduleName}`],
     description: `Get List ${moduleName}`,
     pre: [
+      { method: CommonFunctions.verifyToken },
+      { method: CommonFunctions.verifyStaffToken },
+    ],
+    auth: {
+      strategy: "jwt",
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({}),
+    },
+    handler: function (req, res) {
+      Response(req, res, "find");
+    },
+  },
+  getSystemConfig: {
+    tags: ["api", `${moduleName}`],
+    description: `getSystemConfig ${moduleName}`,
+    pre: [
       { method: CommonFunctions.verifyTokenOrAllowEmpty },
     ],
     validate: {
@@ -23,7 +43,7 @@ module.exports = {
       payload: Joi.object({}),
     },
     handler: function (req, res) {
-      Response(req, res, "find");
+      Response(req, res, "getSystemConfig");
     },
   },
 

@@ -10,8 +10,7 @@
  
  
  const insertSchema = {
-  AreaDirectionName: Joi.string(),
-  AreaDirectionKey: Joi.string()
+  areaDirectionName: Joi.string()
  };
  
  const filterSchema = {

@@ -5,7 +5,7 @@ const Logger = require('../../../utils/logging');
 const { DB, timestamps } = require("../../../config/database");
 const Common = require('../../Common/resourceAccess/CommonResourceAccess');
 const tableName = "AreaData";
-const primaryKeyField = "AreaDataId";
+const primaryKeyField = "areaDataId";
 async function createTable() {
   Logger.info('ResourceAccess', `createTable ${tableName}`);
   return new Promise(async (resolve, reject) => {
@@ -13,22 +13,23 @@ async function createTable() {
       DB.schema
         .createTable(`${tableName}`, function (table) {
           table.increments(`${primaryKeyField}`).primary();
-          table.string('AreaDataName');
-          table.string('AreaDataType');
-          table.string('AreaDataKey');
-          table.integer('AreaParentId');
+          table.string('areaDataName');
+          table.string('areaDataType');
+          table.integer('areaParentId');
+          table.integer('weekViews').defaultTo(0);
+          table.integer('dayViews').defaultTo(0);
+          table.integer('monthViews').defaultTo(0);
+          table.integer('yearViews').defaultTo(0);
+          table.integer('totalViews').defaultTo(0);
           timestamps(table);
           table.index(`${primaryKeyField}`);
-          table.index('AreaDataKey');
-          table.unique('AreaDataKey');
         })
         .then(() => {
           Logger.info(`${tableName}`, `${tableName} table created done`);
           let initCountry = [{
-            AreaDataName: "Việt Nam",
-            AreaDataType: "COUNTRY",
-            AreaDataKey: "VI",
-            AreaParentId: 0
+            areaDataName: "Việt Nam",
+            areaDataType: "COUNTRY",
+            areaParentId: 0
           }];
           DB(`${tableName}`).insert(initCountry).then((result) => {
             Logger.info(`${tableName}`, `init $ {tableName}` + result);
@@ -66,9 +67,9 @@ function _makeQueryBuilderByFilter(filter, skip, limit, order) {
   let queryBuilder = DB(tableName);
   let filterData = filter ? JSON.parse(JSON.stringify(filter)) : {};
 
-  if(filterData.AreaDataName) {
-    queryBuilder.where('AreaDataName', 'like', `%${filter.AreaDataName}%`);
-    delete filterData.AreaDataName
+  if(filterData.areaDataName) {
+    queryBuilder.where('areaDataName', 'like', `%${filter.areaDataName}%`);
+    delete filterData.areaDataName
   }
   queryBuilder.where(filterData);
   queryBuilder.where({ isDeleted: 0 });
@@ -96,6 +97,16 @@ async function customCount(filter, order) {
   let query = _makeQueryBuilderByFilter(filter, undefined, undefined, order);
   return await query.count(`${primaryKeyField} as count`);
 }
+async function incrementView(id) {
+  await Common.increment(tableName, primaryKeyField, id, 'dayViews', 1);
+  await Common.increment(tableName, primaryKeyField, id, 'weekViews', 1);
+  await Common.increment(tableName, primaryKeyField, id, 'monthViews', 1);
+  await Common.increment(tableName, primaryKeyField, id, 'yearViews', 1);
+  return await Common.increment(tableName, primaryKeyField, id, 'totalViews', 1);
+}
+async function sum(field, filter, order) {
+  return await Common.sum(tableName, field, filter, order);
+}
 
 module.exports = {
   insert,
@@ -104,5 +115,7 @@ module.exports = {
   updateById,
   initDB,
   customSearch,
-  customCount
+  customCount,
+  incrementView,
+  sum
 };

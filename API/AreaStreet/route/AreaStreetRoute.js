@@ -10,13 +10,11 @@
  
  
  const insertSchema = {
-  AreaStreetName: Joi.string().required(),
-  AreaStreetKey: Joi.string().required()
+  areaStreetName: Joi.string().required()
  };
  
  const filterSchema = {
-  AreaStreetName: Joi.string(),
-  AreaStreetKey: Joi.string(),
+  areaStreetName: Joi.string(),
   isHidden: Joi.number()
  };
 
@@ -63,6 +61,35 @@
      handler: function (req, res) {
        Response(req, res, "updateById");
      }
+   },
+   getList: {
+    tags: ["api", `${moduleName}`],
+    description: `find ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        filter: Joi.object(filterSchema),
+        skip: Joi.number().default(0).min(0),
+        limit: Joi.number().default(10).max(10),
+        order: Joi.object({
+          key: Joi.string()
+            .default("createdAt")
+            .allow(""),
+          value: Joi.string()
+            .default("desc")
+            .allow("")
+        })
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "find");
+    }
    },
    find: {
      tags: ["api", `${moduleName}`],

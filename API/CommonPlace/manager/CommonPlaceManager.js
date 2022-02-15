@@ -1,11 +1,14 @@
 const CommonPlaceResourceAccess = require("../../CommonPlace/resourceAccess/CommonPlaceResourceAccess");
-
+const CommonPlaceView = require('../../CommonPlace/resourceAccess/CommonPlaceView');
 const Logger = require('../../../utils/logging');
+const { parseIntArray } = require('../../Common/CommonFunctions');
+const { verifyAreaPermission } = require('../../Common/CommonFunctions');
 
 async function insert(req) {
   return new Promise(async (resolve, reject) => {
     try {
       let data = req.payload;
+      data.areaCountryId = 1;
       let result = await CommonPlaceResourceAccess.insert(data);
       if (result) {
         resolve(result);
@@ -26,8 +29,8 @@ async function getCommonPlace(req) {
       let skip = req.payload.skip;
       let order = req.payload.order;
       let limit = req.payload.limit;
-      let result = await CommonPlaceResourceAccess.customSearch(filter, skip, limit, order);
-      let resultCount = await CommonPlaceResourceAccess.customCount(filter, order);
+      let result = await CommonPlaceView.customSearch(filter, skip, limit, order);
+      let resultCount = await CommonPlaceView.customCount(filter, order);
       if (result && resultCount) {
         resolve({ data: result, total: resultCount[0].count });
       } else {
@@ -47,8 +50,15 @@ async function find(req) {
       let skip = req.payload.skip;
       let order = req.payload.order;
       let limit = req.payload.limit;
-      let result = await CommonPlaceResourceAccess.customSearch(filter, skip, limit, order);
-      let resultCount = await CommonPlaceResourceAccess.customCount(filter, order);
+      const staff = req.currentUser;
+      if(staff.roleId !== 1) {
+        filter.areaCountryId = parseIntArray(staff.areaCountryId);
+        filter.areaProvinceId = parseIntArray(staff.areaProvinceId);
+        filter.areaDistrictId = parseIntArray(staff.areaDistrict);
+        filter.areaWardId = parseIntArray(staff.areaWard);
+      }
+      let result = await CommonPlaceView.customSearch(filter, skip, limit, order);
+      let resultCount = await CommonPlaceView.customCount(filter, order);
       if (result && resultCount) {
         resolve({ data: result, total: resultCount[0].count });
       } else {
@@ -65,7 +75,17 @@ async function updateById(req) {
   return new Promise(async (resolve, reject) => {
     try {
       let data = req.payload.data;
-      let id = req.payload.CommonPlaceId;
+      let id = req.payload.commonPlaceId;
+      if(!req.currentUser.roleId) reject("Don't have permission");
+      if(req.currentUser.roleId !== 1) {
+        let find = await CommonPlaceResourceAccess.find({commonPlaceId: id});
+        if(!find)   reject('error');
+        if(find && find.length === 0) reject('error');
+
+        const verifyPermission = verifyAreaPermission(req.currentUser, find[0]);
+        if(!verifyPermission) reject("Don't have permission");
+      }
+      
       let result = await CommonPlaceResourceAccess.updateById(id, data);
       if (result) {
         resolve("OK");
@@ -82,7 +102,17 @@ async function updateById(req) {
 async function deleteById(req) {
   return new Promise(async (resolve, reject) => {
     try {
-      let id = req.payload.CommonPlaceId;
+      let id = req.payload.commonPlaceId;
+      if(!req.currentUser.roleId) reject("Don't have permission");
+      if(req.currentUser.roleId !== 1) {
+        let find = await CommonPlaceResourceAccess.find({commonPlaceId: id});
+        if(!find)   reject('error');
+        if(find && find.length === 0) reject('error');
+
+        const verifyPermission = verifyAreaPermission(req.currentUser, find[0]);
+        if(!verifyPermission) reject("Don't have permission");
+      }
+      
       let result = await CommonPlaceResourceAccess.updateById(id, { isDeleted: 1 });
       if (result) {
         resolve("OK");

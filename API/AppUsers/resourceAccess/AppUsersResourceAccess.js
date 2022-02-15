@@ -100,6 +100,10 @@ async function updateAll(data, filter) {
   return await Common.updateAll(tableName, data, filter);
 }
 
+async function updateAllById(idList, data) {
+  return await Common.updateAllById(tableName, primaryKeyField, idList, data);
+}
+
 async function findById(id) {
   let dataId = {};
   dataId[primaryKeyField] = id;
@@ -140,8 +144,10 @@ function _makeQueryBuilderByFilter(filter, skip, limit, searchText, startDate, e
     }
 
     if (filterData.email) {
-      queryBuilder.where('email', 'like', `%${filterData.email}%`)
-      delete filterData.email;
+    let index = filterData.email.indexOf('@');
+    let email = filterData.email.slice(0, index);
+    queryBuilder.where("email", "like", `%${email}%`);
+    delete filterData.email;
     }
   }
 

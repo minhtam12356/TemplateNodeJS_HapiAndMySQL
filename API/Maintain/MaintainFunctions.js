@@ -12,6 +12,7 @@ let systemStatus = {
   transfer: true,
   withdraw: true,
   signup: true
+  maintainMessage: "Vui lòng liên hệ admin để được hỗ trợ",
 }
 
 //Maintain button for		ALL WEB
@@ -74,6 +75,10 @@ async function maintainSignup(enable){
   Logger.info("Maintain", systemStatus);
 }
 
+async function maintainWarningMessage(message) {
+  systemStatus.maintainMessage = message;
+}
+
 module.exports = {
   maintainAll,
   maintainDeposit,
@@ -81,5 +86,6 @@ module.exports = {
   maintainTransfer,
   maintainWithdraw,
   maintainSignup,
+  maintainWarningMessage,
   systemStatus: systemStatus
 };

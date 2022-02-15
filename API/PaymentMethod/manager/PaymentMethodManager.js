@@ -97,10 +97,21 @@ async function deleteById(req) {
     }
   });
 };
+
+async function getList(req) {
+    return new Promise(async (resolve, reject) => {
+        let result = await PaymentMethodResourceAccess.find()
+        if (result) {
+            resolve(result)
+        }
+        reject("failed");
+    })
+}
 module.exports = {
   insert,
   find,
   updateById,
   findById,
   deleteById
+    getList,
 };

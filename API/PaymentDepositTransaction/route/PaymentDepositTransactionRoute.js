@@ -170,11 +170,32 @@ module.exports = {
         authorization: Joi.string(),
       }).unknown(),
       payload: Joi.object({
-        paymentAmount: Joi.number().required().min(0),
+        paymentServicePackageId: Joi.number().required().default(1),
+        paymentMethodId: Joi.number().required().default(1),
       })
     },
     handler: function (req, res) {
       Response(req, res, "userRequestDeposit");
+    }
+  },
+  userViewRequestDeposit: {
+    tags: ["api", `${moduleName}`],
+    description: `find by id ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        id: Joi.number().min(0),
+        paymentTransactionCode: Joi.string()
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "userViewRequestDeposit");
     }
   },
   approveDepositTransaction: {
@@ -278,7 +299,7 @@ module.exports = {
       Response(req, res, "deleteById");
     }
   },
-  addPointForUser: {
+  addRewardPointForUser: {
     tags: ["api", `${moduleName}`],
     description: `${moduleName} - add reward point for user`,
     pre: [{ method: CommonFunctions.verifyToken },{ method: CommonFunctions.verifyStaffToken } ],
@@ -291,14 +312,15 @@ module.exports = {
       }).unknown(),
       payload: Joi.object({
         id: Joi.number().required().min(0),
-        amount: Joi.number().required(),
+        amount: Joi.number()required().min(0),
         paymentNote: Joi.string(),
       })
     },
     handler: function (req, res) {
-      Response(req, res, "addPointForUser");
+      Response(req, res, "addRewardPointForUser");
     }
   },
+
   exportExcelHistory: {
     tags: ["api", `${moduleName}`],
     description: `${moduleName} - export excel history reward point for user`,
@@ -321,14 +343,14 @@ module.exports = {
   exportSalesToExcel: {
     tags: ["api", `${moduleName}`],
     description: `${moduleName} - export excel sales`,
-    // pre: [{ method: CommonFunctions.verifyToken },{ method: CommonFunctions.verifyStaffToken } ],
-    // auth: {
-    //   strategy: 'jwt',
-    // },
+    pre: [{ method: CommonFunctions.verifyToken },{ method: CommonFunctions.verifyStaffToken } ],
+    auth: {
+      strategy: 'jwt',
+    },
     validate: {
-      // headers: Joi.object({
-      //   authorization: Joi.string(),
-      // }).unknown(),
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
       payload: Joi.object({
         startDate: Joi.string().required(),
         endDate: Joi.string().required(),

@@ -16,7 +16,7 @@ async function createTable() {
           table.integer('appUserId');
           table.string('walletType').defaultTo(WALLET_TYPE.POINT);
           table.float('balance', 48, 24).defaultTo(0);
-          table.string('balanceUnit').defaultTo(BALANCE_UNIT.USD);
+          table.string('balanceUnit').defaultTo(BALANCE_UNIT.VND);
           table.integer('walletBalanceUnitId').defaultTo(0);
           table.string('lastDepositAt');
           table.string('walletAddress'); //use for crypto wallet
@@ -27,6 +27,7 @@ async function createTable() {
           table.index('appUserId');
           table.index('walletType');
           table.index('balance');
+          table.index('balanceUnit');
           table.index('walletBalanceUnitId');
           table.index('lastDepositAt');
           table.index('walletAddress');

@@ -3,8 +3,7 @@
  */
 "use strict";
 const PaymentServicePackageResourceAccess = require("../resourceAccess/PaymentServicePackageResourceAccess");
-const PackageUnitView = require('../resourceAccess/PackageUnitView');
-
+const SystemConfiguration = require('../../SystemConfiguration/SystemConfigurationFunction');
 const Logger = require('../../../utils/logging');
 
 async function insert(req) {
@@ -30,12 +29,26 @@ async function find(req) {
       let skip = req.payload.skip;
       let limit = req.payload.limit;
       let order = req.payload.order;
-      let searchText = req.payload.searchText;
 
-      let paymentServices = await PackageUnitView.customSearch(filter, skip, limit, undefined, undefined, searchText, order);
-      
-      if (paymentServices && paymentServices.length > 0) {
-        let paymentServiceCount = await PackageUnitView.customCount(filter, undefined, undefined, searchText, order);
+      let paymentServices = await PaymentServicePackageResourceAccess.customSearch(filter, skip, limit, undefined, undefined, undefined, order);
+
+      if (paymentServices) {
+        //lay ti le quy doi Xu
+        let _configuration = await SystemConfiguration.getSystemConfig();
+
+        for (let i = 0; i < paymentServices.length; i++) {
+          let promotionAmount = paymentServices[i].promotion; //<<so tien khuyen mai
+
+          //neu so tien khuyen mai sai thi ko de khuyen mai
+          if (promotionAmount === null || promotionAmount === undefined || promotionAmount <= 0) {
+            promotionAmount = 0;
+          }
+
+          //cap nhat ti le quy doi xu cho tung goi cuoc
+          paymentServices[i].exchangePoint = parseInt((paymentServices[i].rechargePackage / _configuration.exchangeRateCoin) * promotionAmount / 100);
+        }
+
+        let paymentServiceCount = await PaymentServicePackageResourceAccess.customCount(filter, undefined, undefined, undefined, order);
         resolve({ data: paymentServices, total: paymentServiceCount[0].count });
       } else {
         resolve({ data: [], total: 0 });
@@ -111,11 +124,10 @@ async function findById(req) {
     }
   });
 };
-
 module.exports = {
   insert,
   find,
   updateById,
   deleteById,
-  findById,
+  findById
 };

@@ -22,6 +22,7 @@ async function createTable() {
           table.float('paymentRewardAmount', 48, 24).defaultTo(0);
           table.string('paymentUnit'); //don vi tien
           table.string('paymentStatus').defaultTo(DEPOSIT_TRX_STATUS.NEW);
+          table.string('paymentTransactionCode', 500).nullable();
           table.string('paymentNote').defaultTo(''); //Ghi chu hoa don
           table.string('paymentRef').defaultTo(''); //Ma hoa don ngoai thuc te
           table.timestamp('paymentApproveDate',{ useTz: true }); // ngay duyet
@@ -48,6 +49,10 @@ async function updateById(id, data) {
   let dataId = {};
   dataId[primaryKeyField] = id;
   return await Common.updateById(tableName, dataId, data);
+}
+
+async function findById(id) {
+  return await Common.findById(tableName, primaryKeyField, id);
 }
 
 async function find(filter, skip, limit, order) {
@@ -111,6 +116,7 @@ module.exports = {
   updateById,
   initDB,
   customSearch,
+  findById,
   modelName: tableName,
   customSum,
   sumAmountDistinctByDate

@@ -10,20 +10,21 @@
  
  
  const insertSchema = {
-  AreaDataName: Joi.string().required(),
-  AreaDataType: Joi.string().required(),
-  AreaParentId: Joi.number().required()
+  areaDataName: Joi.string().required(),
+  areaDataType: Joi.string().required(),
+  areaParentId: Joi.number().required()
  };
  
  const filterSchema = {
-  AreaDataName: Joi.string(),
-  AreaDataType: Joi.string(),
-  AreaParentId: Joi.number().default(1).required(),
+  areaDataName: Joi.string(),
+  areaDataType: Joi.string(),
+  areaParentId: Joi.number().default(1).required(),
   isHidden: Joi.number()
  };
 
  const updateSchema = {
     ...filterSchema,
+    areaParentId: Joi.number().default(1),
     isDeleted: Joi.number()
  }
  
@@ -132,5 +133,34 @@
        Response(req, res, "findById");
      }
    },
+   statisticalViews: {
+    tags: ["api", `${moduleName}`],
+    description: `default 1 => get all views data province ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken }, { method: CommonFunctions.verifyStaffToken }],
+    auth: {
+      strategy: 'jwt',
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        filter: Joi.object(filterSchema),
+        skip: Joi.number().default(0).min(0),
+        limit: Joi.number().default(20).max(100),
+        order: Joi.object({
+          key: Joi.string()
+            .default("createdAt")
+            .allow(""),
+          value: Joi.string()
+            .default("desc")
+            .allow("")
+        })
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "statisticalViews");
+    }
+  },
  };
  

@@ -9,8 +9,8 @@
  const CommonFunctions = require('../../Common/CommonFunctions');
  
 const filterAreaDataSchema = {
-  AreaDataName: Joi.string(),
-  AreaParentId: Joi.number().default(1).required()
+  areaDataName: Joi.string(),
+  areaParentId: Joi.number().default(1).required()
 };
 
 const filterRealEstateSchema = {
@@ -41,6 +41,18 @@ const filterRealEstateSchema = {
     handler: function (req, res) {
       Response(req, res, "getDataFilterRealEstate");
     }  
-  }
+  },
+  getRealEstateUtil: {
+    tags: ["api", `${moduleName}`],
+    description: `user get realestate util data - ${moduleName}`,
+    validate: {
+      payload: Joi.object({
+        realEstateCategoryId: Joi.number().required()
+      })
+    },
+    handler: function (req, res) {
+      Response(req, res, "getRealEstateUtil");
+    }  
+  },
  };
  

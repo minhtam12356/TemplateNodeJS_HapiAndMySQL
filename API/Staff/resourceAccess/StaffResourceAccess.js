@@ -44,6 +44,23 @@ async function createTable() {
         })
         .then(() => {
           Logger.info(`${tableName}`, `${tableName} table created done`);
+          let initUser = [{
+            "lastName": "string",
+            "firstName": "string",
+            "username": "string",
+            "email": "string@string.com",
+            "password": "fc6e53bc3b36d4f8a9479ab9886904dc62b1194f60cc0a7dea4fbc58e0859614",
+            "phoneNumber": "string",
+            "areaCountryId": "1",
+            "areaProvinceId": "1;2;4",
+            "areaDistrictId": "1;2;3;4;5",
+            "areaWardId": "1;2;3;5",
+            "roleId": 1
+          }]
+          DB(`${tableName}`).insert(initUser).then((result) => {
+            Logger.info(`${tableName}`, `init ${tableName}` + result);
+            resolve();
+          });
           resolve();
         });
     });

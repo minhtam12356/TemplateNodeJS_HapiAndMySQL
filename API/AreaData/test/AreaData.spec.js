@@ -35,10 +35,9 @@ describe(`Tests ${Model.modelName}`, function() {
 
   it('Insert Area Success', done => {
     const body = {
-      "AreaDataName": faker.name.firstName(),
-      "AreaDataKey": faker.name.lastName(),
-      "AreaDataType": "COUNTRY",
-      "AreaParentId": 1
+      "areaDataName": faker.name.firstName(),
+      "areaDataType": "COUNTRY",
+      "areaParentId": 1
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
@@ -62,8 +61,7 @@ describe(`Tests ${Model.modelName}`, function() {
       "id": id,
       "data": {
         "isHidden": 1,
-        "AreaDataName": faker.name.firstName(),
-        "AreaDataKey": faker.name.lastName()
+        "areaDataName": faker.name.firstName()
       }
     };
     chai

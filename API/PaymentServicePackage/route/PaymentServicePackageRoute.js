@@ -36,6 +36,7 @@ const updateSchema = {
   packageUnitId: Joi.number().min(0),
   packageDuration: Joi.number().min(1),
   packageStatus: Joi.number().allow([PACKAGE_STATUS.NORMAL, PACKAGE_STATUS.HOT, PACKAGE_STATUS.NEW]),
+  isHidden: Joi.number().allow([0, 1])
 };
 
 module.exports = {
@@ -173,6 +174,26 @@ module.exports = {
     },
     handler: function (req, res) {
       Response(req, res, "find");
+    },
+  },
+
+  userGetPaymentPackageById: {
+    tags: ["api", `${moduleName}`],
+    description: `user find by id ${moduleName}`,
+    pre: [{ method: CommonFunctions.verifyToken }],
+    auth: {
+      strategy: "jwt",
+    },
+    validate: {
+      headers: Joi.object({
+        authorization: Joi.string(),
+      }).unknown(),
+      payload: Joi.object({
+        id: Joi.number().min(0),
+      }),
+    },
+    handler: function (req, res) {
+      Response(req, res, "findById");
     },
   },
 };

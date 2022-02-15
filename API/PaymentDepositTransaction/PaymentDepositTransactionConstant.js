@@ -11,5 +11,8 @@ module.exports = {
     COMPLETED: "Completed",
     DELETED: "Deleted",
     CANCELED: "Canceled",
+  },
+  PAYMENT_DEPOSIT_ERROR: {
+    INVALID_PAYMENT_REQUEST: "INVALID_PAYMENT_REQUEST"
   }
 }

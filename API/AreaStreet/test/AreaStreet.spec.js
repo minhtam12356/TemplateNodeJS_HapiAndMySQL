@@ -34,8 +34,7 @@ describe(`Tests ${Model.modelName}`, function() {
 
   it('Insert Street Success', done => {
     const body = {
-      "AreaStreetName": faker.name.firstName(),
-      "AreaStreetKey": faker.name.lastName()
+      "areaStreetName": faker.name.firstName()
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
@@ -54,44 +53,30 @@ describe(`Tests ${Model.modelName}`, function() {
       });
   });
 
-  it('Insert Street Error', done => {
-    const body = {
-    };
-    chai
-      .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/AreaStreet/insert`)
-      .set('Authorization', token)
-      .send(body)
-      .end((err, res) => {
-        if ( err ) {
-          console.error(err);
-        }
-        checkResponseStatus(res, 400);
-        done();
-      });
-  });
-
-  it('Update Street Error', done => {
-    const body = {
-      "id": 0
-    };
-    chai
-      .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/AreaStreet/updateById`)
-      .set('Authorization', token)
-      .send(body)
-      .end((err, res) => {
-        if ( err ) {
-          console.error(err);
-        }
-        checkResponseStatus(res, 500);
-        done();
-      });
-  });
-
   it('Delete Street Success', done => {
     const body = {
       "id": id
+    };
+    chai
+      .request(`0.0.0.0:${process.env.PORT}`)
+      .post(`/AreaStreet/deleteById`)
+      .set('Authorization', token)
+      .send(body)
+      .end((err, res) => {
+        if ( err ) {
+          console.error(err);
+        }
+        checkResponseStatus(res, 200);
+        done();
+      });
+  });
+
+  it('Update Street Success', done => {
+    const body = {
+      "id": id,
+      "data": {
+        "isDeleted": 1
+      }
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
@@ -107,32 +92,30 @@ describe(`Tests ${Model.modelName}`, function() {
       });
   });
 
-  it('Delete Street Error', done => {
-    const body = {};
+  
+  it('get list street Success', done => {
+    const body = {
+    };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/AreaStreet/updateById`)
+      .post(`/AreaStreet/getList`)
       .set('Authorization', token)
       .send(body)
       .end((err, res) => {
         if ( err ) {
           console.error(err);
         }
-        checkResponseStatus(res, 400);
+        checkResponseStatus(res, 200);
         done();
       });
   });
-
-  it('Update Street Success', done => {
+  
+  it('find street Success', done => {
     const body = {
-      "id": id,
-      "data": {
-        "isDeleted": 1
-      }
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/AreaStreet/updateById`)
+      .post(`/AreaStreet/find`)
       .set('Authorization', token)
       .send(body)
       .end((err, res) => {

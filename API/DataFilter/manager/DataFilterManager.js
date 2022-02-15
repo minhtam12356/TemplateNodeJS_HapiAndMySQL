@@ -5,6 +5,8 @@ const AreaDirectionResourceAccess = require("../../AreaDirection/resourceAccess/
 const AreaDataResourceAccess = require("../../AreaData/resourceAccess/AreaDataResourceAccess");
 const RealEstatePostTypeResourceAccess = require("../../RealEstatePostType/resourceAccess/RealEstatePostTypeResourceAccess");
 const RealEstateCategoryResourceAccess = require("../../RealEstateCategory/resourceAccess/RealEstateCategoryResourceAccess");
+const CommonPlaceView = require('../../CommonPlace/resourceAccess/CommonPlaceView');
+const RealEstateUtil = require('../../RealEstateUtilities/resourceAccess/RealEstateUtilitiesResourceAccess');
 
 const Logger = require('../../../utils/logging');
 
@@ -49,7 +51,29 @@ async function getDataFilterRealEstate(req) {
   });
 };
 
+
+async function getRealEstateUtil(req) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let realEstateCategoryId = req.payload.realEstateCategoryId;
+      let realEstateUtil = await RealEstateUtil.find({ realEstateCategoryId: realEstateCategoryId });
+      let realEstateUtilCount = await RealEstateUtil.count({ realEstateCategoryId: realEstateCategoryId });
+      if (
+        realEstateUtil && realEstateUtilCount
+      ) {
+        resolve({data: realEstateUtil, count: realEstateUtilCount[0].count});
+      } else {
+        reject("Cannot find data");
+      }
+    } catch (e) {
+      Logger.error(__filename, e);
+      reject("failed");
+    }
+  });
+};
+
 module.exports = {
   getDataFilterRealEstate,
-  getAreaData
+  getAreaData,
+  getRealEstateUtil
 }

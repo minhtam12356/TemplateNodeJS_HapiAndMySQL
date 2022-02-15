@@ -9,7 +9,6 @@
    return new Promise(async (resolve, reject) => {
      try {
        let streetData = req.payload;
-       streetData.AreaStreetKey = streetData.AreaStreetKey.toUpperCase(); 
        let result = await AreaStreet.insert(streetData);
        if(result){
         resolve(result);
@@ -29,14 +28,10 @@
        let skip = req.payload.skip;
        let limit = req.payload.limit;
        let order = req.payload.order;
-
-       if(filter && filter.AreaStreetKey) {
-        filter.AreaStreetKey = filter.AreaStreetKey.toUpperCase();
-       }
-       let wards = await AreaStreet.customSearch(filter, skip, limit, order);
-       let wardsCount = await AreaStreet.customCount(filter, order);
-       if (wards && wardsCount) {
-         resolve({data: wards, total: wardsCount[0].count});
+       let streets = await AreaStreet.customSearch(filter, skip, limit, order);
+       let streetsCount = await AreaStreet.customCount(filter, order);
+       if (streets && streetsCount) {
+         resolve({data: streets, total: streetsCount[0].count});
        }else{
          resolve({data: [], total: 0 });
        }
@@ -52,9 +47,6 @@
      try {
        let streetId = req.payload.id;
        let streetData = req.payload.data;
-       if(streetData.AreaStreetKey) {
-        streetData.AreaStreetKey = streetData.AreaStreetKey.toUpperCase();
-       }
        let result = await AreaStreet.updateById(streetId, streetData);
        if(result){
          resolve(result);

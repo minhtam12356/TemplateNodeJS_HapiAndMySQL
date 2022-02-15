@@ -35,11 +35,11 @@ describe(`Tests ${Model.modelName}`, function() {
 
   it('Insert Direction Success', done => {
     const body = {
-      "AreaDirectionName": faker.name.firstName()
+      "areaDirectionName": faker.name.firstName()
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/AreaStreet/insert`)
+      .post(`/AreaDirection/insert`)
       .set('Authorization', token)
       .send(body)
       .end((err, res) => {
@@ -54,30 +54,13 @@ describe(`Tests ${Model.modelName}`, function() {
       });
   });
 
-  it('Insert Direction Error', done => {
-    const body = {
-    };
-    chai
-      .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/AreaStreet/insert`)
-      .set('Authorization', token)
-      .send(body)
-      .end((err, res) => {
-        if ( err ) {
-          console.error(err);
-        }
-        checkResponseStatus(res, 400);
-        done();
-      });
-  });
-
   it('Update Direction Error', done => {
     const body = {
       "id": 0
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/AreaStreet/updateById`)
+      .post(`/AreaDirection/updateById`)
       .set('Authorization', token)
       .send(body)
       .end((err, res) => {
@@ -95,7 +78,7 @@ describe(`Tests ${Model.modelName}`, function() {
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/AreaStreet/updateById`)
+      .post(`/AreaDirection/deleteById`)
       .set('Authorization', token)
       .send(body)
       .end((err, res) => {
@@ -116,7 +99,7 @@ describe(`Tests ${Model.modelName}`, function() {
     };
     chai
       .request(`0.0.0.0:${process.env.PORT}`)
-      .post(`/AreaStreet/updateById`)
+      .post(`/AreaDirection/updateById`)
       .set('Authorization', token)
       .send(body)
       .end((err, res) => {

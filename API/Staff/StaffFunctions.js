@@ -5,6 +5,7 @@
 
 const Logger = require('../../utils/logging');
 const StaffResourceAccess = require("./resourceAccess/StaffResourceAccess");
+const RoleResourceAccess = require("../Role/resourceAccess/RoleResourceAccess");
 const RoleStaffView = require("./resourceAccess/RoleStaffView");
 const crypto = require("crypto");
 
@@ -50,11 +51,19 @@ async function changeStaffPassword(staffData, newPassword) {
   }
 }
 
+async function isValidRole(roleId) {
+  let result = await RoleResourceAccess.find({ roleId: roleId });
 
+  if (result && result.length > 0) {
+    return true;
+  } else {
+    return false;
+  }
+}
 module.exports = {
   verifyCredentials,
   changeStaffPassword,
   unhashPassword,
   hashPassword,
-
+  isValidRole
 }
