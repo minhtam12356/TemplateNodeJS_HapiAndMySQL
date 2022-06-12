@@ -256,12 +256,11 @@ async function createNewUser(userData) {
         resolve(userDetail);
       }
       return;
-    } catch (e) {
+    }).catch ((e) => {
       Logger.info('AppUserFunctions', e);
       Logger.info("can createNewUser user ", JSON.stringify(userData));
       resolve(undefined);
-    }
-  });
+    })
 }
 
 async function sendEmailToResetPassword(user, userToken, email) {
